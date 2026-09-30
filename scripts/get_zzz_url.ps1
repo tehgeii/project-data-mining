@@ -156,7 +156,8 @@ function Find-FromKnownFolders {
     return $null
 }
 
-Write-Host "== Pengambil URL riwayat gacha Zenless Zone Zero ==" -ForegroundColor Cyan
+$ScriptVersion = '1.2'
+Write-Host "== Pengambil URL riwayat gacha Zenless Zone Zero (versi $ScriptVersion) ==" -ForegroundColor Cyan
 
 if ($GameDataPath) {
     $resolved = Resolve-DataPath $GameDataPath
@@ -196,8 +197,15 @@ Write-Host "File cache  : $cacheFile"
 # Cache berisi banyak entri yang dipisahkan '1/0/'. Ambil URL getGachaLog terbaru.
 $buffer = Read-SharedBytes $cacheFile
 if ($null -eq $buffer) {
-    Write-Fail ("File cache sedang dikunci oleh game. Tutup game dulu (URL tetap tersimpan " +
-        "setelah game ditutup), lalu jalankan script ini lagi.")
+    $running = Get-Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.ProcessName -like 'ZenlessZoneZero*' } |
+        Select-Object -ExpandProperty ProcessName -Unique
+    $hint = if ($running) {
+        "Game masih berjalan di latar belakang ($($running -join ', ')). Tutup lewat Task Manager, lalu jalankan lagi."
+    } else {
+        "Tutup game dulu (URL tetap tersimpan setelah game ditutup), lalu jalankan script ini lagi."
+    }
+    Write-Fail "File cache sedang dikunci oleh program lain. $hint"
 }
 $content = [System.Text.Encoding]::UTF8.GetString($buffer)
 $parts = $content -split '1/0/'
