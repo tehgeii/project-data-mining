@@ -108,7 +108,13 @@ with tab_test:
         st.subheader("Uji di data asli pemain")
         st.dataframe(styled(metric_table(task["real"])), hide_index=True)
     else:
-        st.info("Belum ada data asli di `data/real/`, jadi model hanya diuji dengan data simulasi.")
+        st.info(
+            "Model di halaman ini baru diuji dengan **data simulasi**. Riwayat yang kamu import "
+            "hanya dipakai di Kalkulator dan Statistik, tidak ikut ke perbandingan ini.\n\n"
+            "Untuk menguji model dengan data pemain asli: di **Import Data** klik "
+            "**Dataset anonim (.csv)**, simpan file-nya ke folder `data/real/` di proyek, lalu "
+            "jalankan `python scripts/train_models.py` dan push ke GitHub."
+        )
 
 with tab_cv:
     cv = task["cross_validation"]
