@@ -34,15 +34,46 @@ function Write-Fail([string]$Message) {
     exit 1
 }
 
-function Read-SharedText([string]$Path) {
-    # Buka dengan FileShare.ReadWrite supaya tetap bisa dibaca saat game berjalan.
-    $stream = [System.IO.File]::Open($Path, 'Open', 'Read', 'ReadWrite')
+function Read-SharedBytes([string]$Path) {
+    # File cache sedang dipegang game. Game membuka file itu dengan izin
+    # berbagi Read + Write + Delete, jadi kita juga harus meminta ketiganya,
+    # kalau tidak Windows menolak dengan "being used by another process".
     try {
-        $reader = New-Object System.IO.StreamReader($stream, [System.Text.Encoding]::UTF8)
-        return $reader.ReadToEnd()
+        $stream = [System.IO.File]::Open(
+            $Path,
+            [System.IO.FileMode]::Open,
+            [System.IO.FileAccess]::Read,
+            ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
+        try {
+            $buffer = New-Object byte[] $stream.Length
+            $offset = 0
+            while ($offset -lt $buffer.Length) {
+                $read = $stream.Read($buffer, $offset, $buffer.Length - $offset)
+                if ($read -le 0) { break }
+                $offset += $read
+            }
+            return ,$buffer
+        } finally {
+            $stream.Dispose()
+        }
+    } catch { }
+
+    # Cadangan: salin dulu ke folder sementara, lalu baca salinannya.
+    $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("zzz_cache_" + [guid]::NewGuid().ToString('N'))
+    try {
+        Copy-Item -LiteralPath $Path -Destination $temp -Force -ErrorAction Stop
+        return ,[System.IO.File]::ReadAllBytes($temp)
+    } catch {
+        return $null
     } finally {
-        $stream.Dispose()
+        Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
     }
+}
+
+function Read-SharedText([string]$Path) {
+    $bytes = Read-SharedBytes $Path
+    if ($null -eq $bytes) { return '' }
+    return [System.Text.Encoding]::UTF8.GetString($bytes)
 }
 
 function Resolve-DataPath([string]$Path) {
@@ -163,17 +194,10 @@ if (-not $cacheFile) {
 Write-Host "File cache  : $cacheFile"
 
 # Cache berisi banyak entri yang dipisahkan '1/0/'. Ambil URL getGachaLog terbaru.
-$stream = [System.IO.File]::Open($cacheFile, 'Open', 'Read', 'ReadWrite')
-try {
-    $buffer = New-Object byte[] $stream.Length
-    $offset = 0
-    while ($offset -lt $buffer.Length) {
-        $read = $stream.Read($buffer, $offset, $buffer.Length - $offset)
-        if ($read -le 0) { break }
-        $offset += $read
-    }
-} finally {
-    $stream.Dispose()
+$buffer = Read-SharedBytes $cacheFile
+if ($null -eq $buffer) {
+    Write-Fail ("File cache sedang dikunci oleh game. Tutup game dulu (URL tetap tersimpan " +
+        "setelah game ditutup), lalu jalankan script ini lagi.")
 }
 $content = [System.Text.Encoding]::UTF8.GetString($buffer)
 $parts = $content -split '1/0/'
