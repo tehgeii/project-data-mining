@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.ipynb_checkpoints/
+.DS_Store
+# Data asli berisi UID pemain: jangan di-commit. Commit versi anonim (.csv) saja.
+data/real/*.json
+models/simulated_dataset.csv.gz
