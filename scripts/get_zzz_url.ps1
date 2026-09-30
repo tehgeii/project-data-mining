@@ -20,7 +20,9 @@
 
 [CmdletBinding()]
 param(
-    # Opsional: folder ZenlessZoneZero_Data kalau deteksi otomatis gagal.
+    # Opsional: folder instalasi game kalau deteksi otomatis gagal. Boleh folder
+    # utama (mis. '...\steamapps\common\Zenless Zone Zero') atau langsung
+    # folder 'ZenlessZoneZero_Data'.
     [string]$GameDataPath
 )
 
@@ -43,7 +45,27 @@ function Read-SharedText([string]$Path) {
     }
 }
 
-function Find-GameDataPath {
+function Resolve-DataPath([string]$Path) {
+    # Terima folder utama instalasi (Steam / HoYoPlay / Epic) maupun folder
+    # ZenlessZoneZero_Data, lalu kembalikan folder yang berisi webCaches.
+    if (-not $Path) { return $null }
+    $subs = @(
+        '',
+        'ZenlessZoneZero_Data',
+        'ZenlessZoneZero Game\ZenlessZoneZero_Data',
+        'games\ZenlessZoneZero Game\ZenlessZoneZero_Data'
+    )
+    foreach ($sub in $subs) {
+        $candidate = if ($sub) { Join-Path $Path $sub } else { $Path }
+        if (Test-Path -LiteralPath (Join-Path $candidate 'webCaches')) {
+            return $candidate
+        }
+    }
+    return $null
+}
+
+function Find-FromPlayerLog {
+    # Cara utama: log game mencatat lokasi instalasi, apa pun launcher-nya.
     $logDirs = @(
         (Join-Path $env:USERPROFILE 'AppData\LocalLow\miHoYo\ZenlessZoneZero'),
         # nama folder server China, ditulis dengan kode karakter supaya
@@ -57,24 +79,67 @@ function Find-GameDataPath {
             $text = Read-SharedText $log
             $found = [regex]::Matches($text, '([A-Za-z]:[\\/][^\r\n"]*?ZenlessZoneZero_Data)')
             for ($i = $found.Count - 1; $i -ge 0; $i--) {
-                $candidate = $found[$i].Groups[1].Value -replace '/', '\'
-                if (Test-Path -LiteralPath (Join-Path $candidate 'webCaches')) {
-                    return $candidate
-                }
+                $candidate = Resolve-DataPath ($found[$i].Groups[1].Value -replace '/', '\')
+                if ($candidate) { return $candidate }
             }
         }
     }
     return $null
 }
 
+function Get-SteamLibraries {
+    $roots = @()
+    try {
+        $steamPath = (Get-ItemProperty -Path 'HKCU:\Software\Valve\Steam' -Name SteamPath -ErrorAction Stop).SteamPath
+        if ($steamPath) { $roots += ($steamPath -replace '/', '\') }
+    } catch { }
+    if (${env:ProgramFiles(x86)}) { $roots += (Join-Path ${env:ProgramFiles(x86)} 'Steam') }
+    $libs = @()
+    foreach ($root in $roots) {
+        $libs += $root
+        $vdf = Join-Path $root 'steamapps\libraryfolders.vdf'
+        if (Test-Path -LiteralPath $vdf) {
+            foreach ($m in [regex]::Matches((Read-SharedText $vdf), '"path"\s*"([^"]+)"')) {
+                $libs += ($m.Groups[1].Value -replace '\\\\', '\')
+            }
+        }
+    }
+    return $libs | Select-Object -Unique
+}
+
+function Find-FromKnownFolders {
+    # Cadangan kalau log tidak ada: cek lokasi instalasi yang umum.
+    $bases = @()
+    foreach ($lib in Get-SteamLibraries) {
+        $bases += (Join-Path $lib 'steamapps\common\Zenless Zone Zero')
+    }
+    foreach ($pf in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+        if (-not $pf) { continue }
+        $bases += (Join-Path $pf 'HoYoPlay\games')
+        $bases += (Join-Path $pf 'Epic Games\ZenlessZoneZero')
+    }
+    foreach ($base in $bases) {
+        $candidate = Resolve-DataPath $base
+        if ($candidate) { return $candidate }
+    }
+    return $null
+}
+
 Write-Host "== Pengambil URL riwayat gacha Zenless Zone Zero ==" -ForegroundColor Cyan
 
-if (-not $GameDataPath) {
-    $GameDataPath = Find-GameDataPath
+if ($GameDataPath) {
+    $resolved = Resolve-DataPath $GameDataPath
+    if (-not $resolved) {
+        Write-Fail "Folder '$GameDataPath' tidak berisi data game (webCaches). Periksa lagi lokasinya."
+    }
+    $GameDataPath = $resolved
+} else {
+    $GameDataPath = Find-FromPlayerLog
+    if (-not $GameDataPath) { $GameDataPath = Find-FromKnownFolders }
 }
-if (-not $GameDataPath -or -not (Test-Path -LiteralPath (Join-Path $GameDataPath 'webCaches'))) {
-    Write-Fail ("Folder game tidak ditemukan. Jalankan game minimal sekali, atau isi manual:`n" +
-        "  powershell -ExecutionPolicy Bypass -File .\get_zzz_url.ps1 -GameDataPath 'D:\...\ZenlessZoneZero_Data'")
+if (-not $GameDataPath) {
+    Write-Fail ("Folder game tidak ditemukan. Jalankan game minimal sekali, atau isi lokasi instalasi manual, contoh:`n" +
+        "  powershell -ExecutionPolicy Bypass -File .\get_zzz_url.ps1 -GameDataPath 'D:\SteamLibrary\steamapps\common\Zenless Zone Zero'")
 }
 Write-Host "Folder game : $GameDataPath"
 

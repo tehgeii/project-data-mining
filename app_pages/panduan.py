@@ -64,13 +64,32 @@ with st.expander("Apakah aman? Bisa kena ban?"):
     )
 with st.expander("Muncul 'authkey sudah kedaluwarsa'"):
     st.write("Buka lagi Signal Search → History di game, lalu jalankan ulang script untuk mendapatkan URL baru.")
+with st.expander("Bisa untuk ZZZ versi Steam, HoYoPlay, atau Epic Games?"):
+    st.markdown(
+        """
+Bisa. Script mencari lokasi game dari **log game** (`Player.log`), yang ditulis oleh
+game itu sendiri apa pun launcher-nya. Kalau log tidak ditemukan, script juga
+memeriksa folder library **Steam** dan lokasi bawaan **HoYoPlay** / **Epic Games**.
+
+Yang penting: sebelum menjalankan script, buka dulu **Signal Search → History**
+di game dari launcher yang kamu pakai.
+"""
+    )
 with st.expander("Muncul 'Folder game tidak ditemukan'"):
-    st.write("Jalankan game minimal sekali, atau isi lokasi folder secara manual:")
+    st.write(
+        "Jalankan game minimal sekali, atau isi lokasi instalasi secara manual. "
+        "Cukup folder utama gamenya, contoh:"
+    )
     st.code(
+        "# Steam\n"
         "powershell -ExecutionPolicy Bypass -File .\\get_zzz_url.ps1 "
-        "-GameDataPath 'D:\\Games\\ZenlessZoneZero Game\\ZenlessZoneZero_Data'",
+        "-GameDataPath 'D:\\SteamLibrary\\steamapps\\common\\Zenless Zone Zero'\n"
+        "# HoYoPlay\n"
+        "powershell -ExecutionPolicy Bypass -File .\\get_zzz_url.ps1 "
+        "-GameDataPath 'C:\\Program Files\\HoYoPlay\\games\\ZenlessZoneZero Game'",
         language="powershell",
     )
+    st.caption("Steam: klik kanan game di Library → Manage → Browse local files untuk melihat lokasinya.")
 with st.expander("Kenapa pity di aplikasi beda dengan di game?"):
     st.write(
         "Server hanya menyimpan riwayat beberapa bulan terakhir. Kalau S terakhirmu lebih lama dari itu, "
