@@ -78,10 +78,10 @@ st.caption(f"Peluang S di pull berikutnya: {pct(P.s_chance_at_pity(banner, pity 
 
 fig = go.Figure()
 x = np.arange(1, max_pulls + 1)
-fig.add_trace(go.Scatter(x=x, y=cdf * 100, mode="lines", name="S rate-up", line=dict(width=3)))
+fig.add_trace(go.Scatter(x=x, y=cdf * 100, mode="lines", name="S rate-up", line=dict(width=3, color="#F5A623")))
 any_cdf = np.cumsum(next_s) * 100
-fig.add_trace(go.Scatter(x=x[: len(any_cdf)], y=any_cdf, mode="lines", name="S apa saja", line=dict(dash="dot")))
-fig.add_vline(x=n_pulls, line_dash="dash", line_color="gray")
+fig.add_trace(go.Scatter(x=x[: len(any_cdf)], y=any_cdf, mode="lines", name="S apa saja", line=dict(dash="dot", width=2, color="#58A6FF")))
+fig.add_vline(x=n_pulls, line_dash="dash", line_color="#8B949E")
 fig.update_layout(
     title="Peluang kumulatif (Markov Chain)",
     xaxis_title="Jumlah pull dari sekarang",

@@ -5,6 +5,16 @@ import streamlit as st
 from zzzgacha.models import BASELINE_DUMMY, BASELINE_MARKOV, ML_MODELS
 from zzzgacha.ui import load_report
 
+# Palet yang kontras di tema gelap; dipakai konsisten di semua grafik halaman ini.
+MODEL_COLORS = {
+    BASELINE_MARKOV: "#E6EDF3",
+    "Logistic Regression": "#58A6FF",
+    "Decision Tree": "#F5A623",
+    "Random Forest": "#F85149",
+    "XGBoost": "#3FB950",
+}
+METRIC_COLORS = {"Accuracy": "#58A6FF", "Balanced Acc.": "#F5A623", "F1-score": "#3FB950"}
+
 st.title("🤖 Perbandingan Algoritma")
 
 report = load_report()
@@ -82,7 +92,7 @@ with tab_test:
 
     fig = go.Figure()
     for label in ("Accuracy", "Balanced Acc.", "F1-score"):
-        fig.add_trace(go.Bar(name=label, x=df["Model"], y=df[label]))
+        fig.add_trace(go.Bar(name=label, x=df["Model"], y=df[label], marker_color=METRIC_COLORS[label]))
     fig.update_layout(barmode="group", height=380, margin=dict(l=10, r=10, t=30, b=10),
                       legend=dict(orientation="h", y=1.12), yaxis_range=[0, 1])
     st.plotly_chart(fig, config={"displayModeBar": False})
@@ -139,11 +149,15 @@ with tab_curve:
         if name in curve:
             fig.add_trace(go.Scatter(
                 x=curve["pity"], y=[v * 100 for v in curve[name]], mode="lines", name=name,
-                line=dict(width=4 if name == BASELINE_MARKOV else 2, dash="dash" if name == BASELINE_MARKOV else "solid"),
+                line=dict(
+                    width=4 if name == BASELINE_MARKOV else 2,
+                    dash="dash" if name == BASELINE_MARKOV else "solid",
+                    color=MODEL_COLORS[name],
+                ),
             ))
     emp = task["empirical"]["sim"][banner_key]
     fig.add_trace(go.Scatter(x=emp["pity"], y=[v * 100 for v in emp["rate"]], mode="markers",
-                             name="Data (empiris)", marker=dict(size=4, color="gray")))
+                             name="Data (empiris)", marker=dict(size=4, color="#8B949E")))
     fig.update_layout(xaxis_title="Pity sekarang", yaxis_title="Peluang (%)", height=420,
                       margin=dict(l=10, r=10, t=30, b=10), legend=dict(orientation="h", y=-0.2))
     st.plotly_chart(fig, config={"displayModeBar": False})
@@ -160,7 +174,8 @@ with tab_cm:
         z=[[cm["tn"], cm["fp"]], [cm["fn"], cm["tp"]]],
         x=["Tebak: tidak S", "Tebak: S"], y=["Asli: tidak S", "Asli: S"],
         text=[[cm["tn"], cm["fp"]], [cm["fn"], cm["tp"]]], texttemplate="%{text:,}",
-        colorscale="Blues", showscale=False,
+        colorscale=[[0, "#161B22"], [1, "#1F6FEB"]], showscale=False,
+        textfont=dict(color="#E6EDF3", size=16),
     ))
     fig.update_layout(height=320, margin=dict(l=10, r=10, t=30, b=10), yaxis_autorange="reversed")
     st.plotly_chart(fig, config={"displayModeBar": False})
@@ -169,7 +184,7 @@ with tab_imp:
     imp = task["feature_importances"]
     choice = st.selectbox("Model", list(imp))
     values = imp[choice]
-    fig = go.Figure(go.Bar(x=list(values.values()), y=list(values.keys()), orientation="h"))
+    fig = go.Figure(go.Bar(x=list(values.values()), y=list(values.keys()), orientation="h", marker_color="#F5A623"))
     fig.update_layout(height=280, margin=dict(l=10, r=10, t=30, b=10))
     st.plotly_chart(fig, config={"displayModeBar": False})
     st.caption(
