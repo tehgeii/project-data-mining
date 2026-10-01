@@ -13,7 +13,7 @@ Decision Tree, Random Forest, dan XGBoost, dengan Markov Chain sebagai acuan teo
 
 | Nama | Peran |
 |---|---|
-| [TGI / Dafi (@tehgeii)](https://github.com/tehgeii) | Ketua tim, pengujian dengan data game asli (Steam), deploy |
+| [TGI / Dafi (@tehgeii)](https://github.com/tehgeii) | Pengujian dengan data game asli (Steam), deploy aplikasi |
 | _(anggota 2)_ | |
 | _(anggota 3)_ | |
 | _(anggota 4)_ | |
