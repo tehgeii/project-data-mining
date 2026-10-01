@@ -56,15 +56,19 @@ for state in current_states(data):
 
 if len(s_rows):
     fig = go.Figure()
-    colors = ["#2ca02c" if f == 1 else "#d62728" for f in s_rows["featured"]]
+    colors = ["#3FB950" if f == 1 else "#F85149" for f in s_rows["featured"]]
     fig.add_trace(go.Bar(x=list(range(1, len(s_rows) + 1)), y=s_rows["pity"], marker_color=colors,
-                         text=s_rows["name"], hovertemplate="%{text}<br>pity %{y}<extra></extra>"))
-    fig.add_hline(y=P.expected_pulls_per_s(banner), line_dash="dash", annotation_text="rata-rata teori")
-    fig.add_hline(y=banner.soft_pity_start, line_dash="dot", line_color="orange", annotation_text="soft pity")
+                         customdata=s_rows["name"], hovertemplate="%{customdata}<br>pity %{y}<extra></extra>"))
+    fig.add_hline(y=P.expected_pulls_per_s(banner), line_dash="dash", line_color="#C9D1D9", annotation_text="rata-rata teori", annotation_position="bottom left")
+    fig.add_hline(y=banner.soft_pity_start, line_dash="dot", line_color="#F5A623", annotation_text="soft pity", annotation_position="top left")
     fig.update_layout(title="Pity setiap S (hijau = rate-up, merah = kalah 50/50)", xaxis_title="S ke-",
-                      yaxis_title="Pity", height=340, margin=dict(l=10, r=10, t=50, b=10), yaxis_range=[0, banner.hard_pity])
+                      yaxis_title="Pity", xaxis_dtick=1, height=340, margin=dict(l=10, r=10, t=50, b=10), yaxis_range=[0, banner.hard_pity])
     st.plotly_chart(fig, config={"displayModeBar": False})
-    st.dataframe(s_history(data), hide_index=True)
+    table = s_history(data).rename(
+        columns={"time": "Waktu", "banner": "Banner", "name": "Nama", "pity": "Pity", "hasil": "Hasil"}
+    )
+    table["Banner"] = banner.label.split(" (")[0]
+    st.dataframe(table, hide_index=True)
 
 st.caption(
     "Server hanya menyimpan riwayat beberapa bulan terakhir, jadi pity S pertama yang tercatat bisa "
