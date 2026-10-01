@@ -47,7 +47,7 @@ with st.expander("Metode yang dipakai"):
         """
 - **Markov Chain**: model matematis sistem pity. Menghasilkan peluang *eksak*
   (misalnya peluang dapat S rate-up dalam 50 pull dari pity 30).
-- **Logistic Regression, Decision Tree, Random Forest, XGBoost**: algoritma
+- **Naive Bayes, KNN, Logistic Regression, Decision Tree, Random Forest, XGBoost**: algoritma
   klasifikasi yang *belajar dari data* pull untuk menebak apakah S akan keluar.
 - Semua model dibandingkan dengan **Accuracy**, **Balanced Accuracy**,
   **Precision/Recall/F1**, **ROC-AUC**, **Log Loss**, dan **Brier Score**.
