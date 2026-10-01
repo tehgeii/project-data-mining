@@ -8,6 +8,8 @@ from zzzgacha.ui import load_report
 # Palet yang kontras di tema gelap; dipakai konsisten di semua grafik halaman ini.
 MODEL_COLORS = {
     BASELINE_MARKOV: "#E6EDF3",
+    "Naive Bayes": "#BC8CFF",
+    "KNN": "#FF7EB6",
     "Logistic Regression": "#58A6FF",
     "Decision Tree": "#F5A623",
     "Random Forest": "#F85149",
@@ -88,7 +90,7 @@ tab_test, tab_cv, tab_curve, tab_cm, tab_imp = st.tabs(
 with tab_test:
     df = metric_table(task["test"])
     st.dataframe(styled(df), hide_index=True)
-    st.caption("Hijau = terbaik di antara 4 algoritma ML. Log Loss & Brier: makin kecil makin baik.")
+    st.caption("Hijau = terbaik di antara 6 algoritma ML. Log Loss & Brier: makin kecil makin baik.")
 
     fig = go.Figure()
     for label in ("Accuracy", "Balanced Acc.", "F1-score"):

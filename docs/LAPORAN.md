@@ -26,7 +26,7 @@ Proyek ini menjawab pertanyaan itu dengan dua pendekatan:
 
 1. Berapa peluang pemain mendapatkan S / S rate-up dalam N pull, dilihat dari
    pity dan status guaranteed-nya?
-2. Dari Logistic Regression, Decision Tree, Random Forest, dan XGBoost,
+2. Dari Naive Bayes, KNN, Logistic Regression, Decision Tree, Random Forest, dan XGBoost,
    algoritma mana yang paling akurat memprediksi keluarnya S?
 3. Apakah algoritma data mining mampu "menemukan" mekanisme soft pity dari data?
 
@@ -112,6 +112,8 @@ Dua tugas klasifikasi biner:
 
 | Algoritma | Pengaturan utama | Alasan dipilih |
 |---|---|---|
+| Naive Bayes | GaussianNB | materi kuliah; model probabilistik paling sederhana |
+| KNN | StandardScaler + k = 101 tetangga | materi kuliah; menebak dari pull lain yang mirip |
 | Logistic Regression | StandardScaler + LR | model linear sederhana, pembanding dasar |
 | Decision Tree | max_depth 6, min_samples_leaf 50 | mudah dijelaskan, aturannya bisa dibaca |
 | Random Forest | 150 pohon, max_depth 8 | ensemble bagging, lebih stabil dari satu pohon |
@@ -135,26 +137,29 @@ Dua tugas klasifikasi biner:
 
 ### Tugas A: S di pull berikutnya
 
-| Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss | Brier |
-|---|---|---|---|---|---|---|
-| Baseline: selalu "tidak S" | 0,9828 | 0,5000 | 0,0000 | 0,5000 | 0,2768 | 0,0172 |
-| Markov Chain (teori) | 0,9830 | 0,5184 | 0,0699 | 0,7890 | 0,0662 | 0,0145 |
-| Logistic Regression | 0,9828 | 0,5000 | 0,0000 | 0,7578 | 0,0776 | 0,0161 |
-| Decision Tree | **0,9830** | 0,5136 | 0,0526 | **0,7889** | **0,0663** | **0,0146** |
-| Random Forest | **0,9830** | 0,5151 | 0,0579 | 0,7877 | **0,0663** | **0,0146** |
-| XGBoost | 0,9829 | **0,5162** | **0,0618** | 0,7862 | 0,0664 | **0,0146** |
+| Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss |
+|---|---|---|---|---|---|
+| Baseline: selalu "tidak S" | 0,9828 | 0,5000 | 0,0000 | 0,5000 | 0,2768 |
+| Markov Chain (teori) | 0,9830 | 0,5184 | 0,0699 | 0,7890 | 0,0662 |
+| Naive Bayes | 0,9829 | 0,5007 | 0,0030 | 0,7563 | 0,0792 |
+| KNN | 0,9829 | 0,5150 | 0,0574 | 0,7728 | 0,0985 |
+| Logistic Regression | 0,9828 | 0,5000 | 0,0000 | 0,7578 | 0,0776 |
+| Decision Tree | **0,9830** | 0,5136 | 0,0526 | **0,7889** | **0,0663** |
+| Random Forest | **0,9830** | 0,5151 | 0,0579 | 0,7877 | **0,0663** |
+| XGBoost | 0,9829 | **0,5162** | **0,0618** | 0,7862 | 0,0664 |
 
 ### Tugas B: S dalam 10 pull berikutnya
 
-| Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss | Brier |
-|---|---|---|---|---|---|---|
-| Baseline: selalu "tidak S" | 0,8337 | 0,5000 | 0,0000 | 0,5000 | 2,6804 | 0,1663 |
-| Markov Chain (teori) | 0,9108 | 0,7601 | 0,6658 | 0,8110 | 0,2811 | 0,0770 |
-| Logistic Regression | 0,8888 | 0,6675 | 0,5010 | 0,7895 | 0,3625 | 0,1028 |
-| Decision Tree | **0,9108** | **0,7614** | **0,6671** | **0,8117** | **0,2814** | **0,0770** |
-| Random Forest | **0,9108** | 0,7612 | 0,6669 | 0,8102 | 0,2816 | 0,0771 |
-| XGBoost | **0,9108** | 0,7604 | 0,6661 | 0,8098 | 0,2816 | 0,0771 |
-
+| Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss |
+|---|---|---|---|---|---|
+| Baseline: selalu "tidak S" | 0,8337 | 0,5000 | 0,0000 | 0,5000 | 2,6804 |
+| Markov Chain (teori) | 0,9108 | 0,7601 | 0,6658 | 0,8110 | 0,2811 |
+| Naive Bayes | 0,8572 | 0,7569 | 0,5855 | 0,7810 | 0,3844 |
+| KNN | 0,9107 | 0,7598 | 0,6654 | 0,8072 | 0,2866 |
+| Logistic Regression | 0,8888 | 0,6675 | 0,5010 | 0,7895 | 0,3625 |
+| Decision Tree | **0,9108** | **0,7614** | **0,6671** | **0,8117** | **0,2814** |
+| Random Forest | **0,9108** | 0,7612 | 0,6669 | 0,8102 | 0,2816 |
+| XGBoost | **0,9108** | 0,7604 | 0,6661 | 0,8098 | 0,2816 |
 
 ### Uji di data asli pemain (2 akun, model dilatih hanya dengan data simulasi)
 
@@ -165,10 +170,12 @@ tetap akurat untuk pemain sungguhan?*
 |---|---|---|---|---|---|
 | Baseline: selalu "tidak S" | 0,9862 | 0,8649 | 0,5000 | 0,0000 | 2,1770 |
 | Markov Chain (teori) | 0,9870 | 0,9354 | 0,7818 | 0,7050 | 0,2321 |
+| Naive Bayes | 0,9862 | 0,8767 | **0,7898** | 0,5950 | 0,2791 |
+| KNN | **0,9870** | **0,9346** | 0,7787 | **0,7000** | **0,2295** |
 | Logistic Regression | 0,9862 | 0,9111 | 0,6734 | 0,5138 | 0,2712 |
-| Decision Tree | **0,9870** | 0,9329 | 0,7725 | 0,6899 | **0,2325** |
+| Decision Tree | **0,9870** | 0,9329 | 0,7725 | 0,6899 | 0,2325 |
 | Random Forest | **0,9870** | 0,9329 | 0,7751 | 0,6923 | 0,2326 |
-| XGBoost | **0,9870** | **0,9337** | **0,7756** | **0,6950** | **0,2325** |
+| XGBoost | **0,9870** | 0,9337 | 0,7756 | 0,6950 | 0,2325 |
 
 Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
 
@@ -181,26 +188,34 @@ Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
    dan Log Loss memperlihatkan perbedaannya.
 2. **Tugas B lebih bermakna.** Ketika kelasnya lebih seimbang (±16,6% positif),
    perbedaan antar-algoritma terlihat jelas: model berbasis pohon (Decision
-   Tree, Random Forest, XGBoost) mencapai akurasi ±91,1%, jauh di atas
-   Logistic Regression (±88,9%) dan baseline (±83,4%).
+   Tree, Random Forest, XGBoost) dan KNN mencapai akurasi ±91,1%, di atas
+   Logistic Regression (±88,9%), Naive Bayes (±85,7%), dan baseline (±83,4%).
 3. **Model pohon menemukan soft pity sendiri.** Pada Tugas B, aturan Decision
    Tree memisahkan data di sekitar `pity_ratio ≈ 0,71–0,74` (pity ±64 untuk
    Agent, ±57 untuk W-Engine). Titik ini kira-kira 10 pull sebelum soft pity,
    tepat saat jendela "10 pull ke depan" mulai menyentuh soft pity. Model ini
    tidak pernah diberi tahu soal soft pity. Kurva peluangnya (halaman
    Perbandingan → Kurva peluang) juga menempel pada kurva teori Markov.
-4. **Logistic Regression kalah** karena hanya bisa membentuk kurva sigmoid
-   yang halus, sehingga tidak bisa meniru lonjakan tajam setelah soft pity.
-5. **Fitur `guaranteed` hampir tidak berpengaruh** (feature importance ≈ 0).
+4. **Logistic Regression dan Naive Bayes kalah.** Logistic Regression hanya
+   bisa membentuk kurva sigmoid yang halus, sehingga tidak bisa meniru lonjakan
+   tajam setelah soft pity. Naive Bayes menganggap tiap fitur saling bebas dan
+   berdistribusi normal, padahal `pity` dan `pity_ratio` sangat berkaitan dan
+   peluang S tidak berbentuk lonceng, sehingga angka peluangnya paling meleset
+   (Log Loss terbesar).
+5. **KNN setara model pohon.** Karena fiturnya sedikit dan berulang (pity
+   hanya 0–89), tetangga terdekat praktis adalah pull lain dengan pity yang
+   sama, sehingga KNN meniru peluang empiris per pity. Kelemahannya: model
+   menyimpan seluruh data latih dan prediksinya paling lambat.
+6. **Fitur `guaranteed` hampir tidak berpengaruh** (feature importance ≈ 0).
    Ini benar secara aturan game: guaranteed hanya menentukan *S mana* yang
    keluar, bukan *kapan* S keluar.
-6. **Terbukti di data asli.** Urutan hasil di data 2 akun asli sama dengan
-   di simulasi: model pohon ±93,3%, Logistic Regression ±91,1%, baseline
-   ±86,5%, dan Markov (teori) ±93,5%. Artinya asumsi soft pity yang dipakai
+7. **Terbukti di data asli.** Urutan hasil di data 2 akun asli sama dengan
+   di simulasi: KNN ±93,5% dan model pohon ±93,3%, Logistic Regression ±91,1%,
+   Naive Bayes ±87,7%, baseline ±86,5%, dan Markov (teori) ±93,5%. Artinya asumsi soft pity yang dipakai
    simulasi cocok dengan perilaku gacha sungguhan. Selain itu, pity dan status
    guaranteed yang dihitung aplikasi untuk akun asli **sama persis** dengan
    yang tampil di game.
-7. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
+8. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
    (teori), karena hasil gacha memang acak. Model terbaik adalah yang paling
    mendekati peluang sebenarnya.
 
@@ -221,10 +236,10 @@ Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
 
 - Sistem pity ZZZ dapat dimodelkan secara eksak dengan Markov Chain; aplikasi
   memakainya untuk menghitung peluang dapat S/S rate-up dalam N pull.
-- Untuk memprediksi keluarnya S, **Decision Tree, Random Forest, dan XGBoost**
-  memberikan akurasi tertinggi (±91,1% pada tugas 10 pull di simulasi, ±93,3%
-  di data asli) dan hampir sama dengan batas teoretis, sedangkan Logistic
-  Regression paling rendah.
+- Untuk memprediksi keluarnya S, **Decision Tree, Random Forest, XGBoost, dan
+  KNN** memberikan akurasi tertinggi (±91,1% pada tugas 10 pull di simulasi,
+  ±93,3–93,5% di data asli) dan hampir sama dengan batas teoretis, sedangkan
+  Naive Bayes dan Logistic Regression paling rendah.
 - **Accuracy tidak cukup** untuk data tidak seimbang; perlu metrik pendukung
   seperti Balanced Accuracy, F1, ROC-AUC, dan Log Loss.
 

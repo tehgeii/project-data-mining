@@ -1,5 +1,5 @@
 """Pelatihan dan evaluasi model: Logistic Regression, Decision Tree,
-Random Forest, XGBoost, ditambah dua pembanding (baseline).
+Random Forest, XGBoost, Naive Bayes, KNN, ditambah dua pembanding (baseline).
 
 Ada dua tugas klasifikasi. Keduanya memakai fitur yang sudah diketahui
 SEBELUM pull dilakukan (tidak ada kebocoran informasi masa depan):
@@ -25,6 +25,8 @@ import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -50,7 +52,7 @@ from .probability import hazard
 FEATURES = ["pity", "pity_ratio", "guaranteed", "is_wengine"]
 TARGET = "is_s"
 
-ML_MODELS = ["Logistic Regression", "Decision Tree", "Random Forest", "XGBoost"]
+ML_MODELS = ["Naive Bayes", "KNN", "Logistic Regression", "Decision Tree", "Random Forest", "XGBoost"]
 BASELINE_DUMMY = "Baseline: selalu tebak 'tidak S'"
 BASELINE_MARKOV = "Markov Chain (teori)"
 
@@ -141,6 +143,10 @@ def make_models(random_state: int = 42, horizon: int = 1) -> dict[str, BaseEstim
     return {
         BASELINE_DUMMY: DummyClassifier(strategy="most_frequent"),
         BASELINE_MARKOV: MarkovTheoryClassifier(horizon=horizon),
+        "Naive Bayes": GaussianNB(),
+        # Fitur diskalakan supaya jarak tidak didominasi kolom pity (0..89).
+        # k besar karena label sangat berisik (gacha acak).
+        "KNN": make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=101, n_jobs=-1)),
         "Logistic Regression": make_pipeline(
             StandardScaler(), LogisticRegression(max_iter=2000, random_state=random_state)
         ),

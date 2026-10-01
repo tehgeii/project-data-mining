@@ -2,8 +2,9 @@
 
 Aplikasi web (Streamlit) untuk menghitung dan memprediksi peluang mendapatkan
 **S-Rank Agent** dan **S-Rank W-Engine** di banner terbatas *Zenless Zone Zero*,
-sekaligus **membandingkan algoritma data mining**: Logistic Regression,
-Decision Tree, Random Forest, dan XGBoost, dengan Markov Chain sebagai acuan teori.
+sekaligus **membandingkan 6 algoritma data mining**: Naive Bayes, KNN,
+Logistic Regression, Decision Tree, Random Forest, dan XGBoost, dengan Markov
+Chain sebagai acuan teori.
 
 > Proyek mata kuliah Penambangan Data. Tidak berafiliasi dengan HoYoverse.
 
@@ -70,7 +71,7 @@ zzzgacha/
   fetcher.py              # ambil riwayat dari API resmi (aman, host dibatasi)
   simulate.py             # simulasi Monte Carlo -> dataset sintetis
   dataset.py              # muat data asli dari data/real/
-  models.py               # 4 algoritma + baseline, fitur, metrik evaluasi
+  models.py               # 6 algoritma + baseline, fitur, metrik evaluasi
   demo.py                 # data contoh
 scripts/
   get_zzz_url.ps1         # script PowerShell pengambil URL riwayat (Windows)
