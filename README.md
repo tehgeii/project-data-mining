@@ -7,6 +7,20 @@ Decision Tree, Random Forest, dan XGBoost, dengan Markov Chain sebagai acuan teo
 
 > Proyek mata kuliah Penambangan Data. Tidak berafiliasi dengan HoYoverse.
 
+🌐 **Coba langsung:** <https://project-data-mining-zzz.streamlit.app/> (bisa dibuka di HP, tablet, dan laptop)
+
+## Tim
+
+| Nama | Peran |
+|---|---|
+| [TGI / Dafi (@tehgeii)](https://github.com/tehgeii) | Ketua tim, pengujian dengan data game asli (Steam), deploy |
+| _(anggota 2)_ | |
+| _(anggota 3)_ | |
+| _(anggota 4)_ | |
+| _(anggota 5)_ | |
+
+Dibantu oleh Claude (Anthropic) dalam penulisan kode.
+
 ## Fitur
 
 | Halaman | Isi |
