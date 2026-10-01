@@ -2,7 +2,7 @@
 
 Dokumen ini berisi bahan yang bisa langsung dipakai untuk menyusun laporan dan
 slide presentasi. Angka hasil diambil dari `models/report.json`
-(seed 42, 400 akun simulasi). Kalau model dilatih ulang, angka di aplikasi
+(seed 42, 400 akun simulasi, 2 akun asli). Kalau model dilatih ulang, angka di aplikasi
 (halaman **Perbandingan Algoritma**) selalu yang terbaru.
 
 ---
@@ -78,7 +78,7 @@ dalam N pull". Hasilnya diverifikasi dengan simulasi Monte Carlo 400.000 pull
 | Sumber | Keterangan |
 |---|---|
 | **Simulasi Monte Carlo** | 400 akun virtual, masing-masing 80–700 pull per banner, dibangkitkan dari model 4.1 (seed 42). Total ±314.000 pull. |
-| **Data asli** | Riwayat anggota kelompok dan teman yang bersedia, dalam bentuk anonim (tanpa UID, nama item, dan waktu). Dipakai sebagai data uji tambahan. |
+| **Data asli** | 2 akun pemain (anggota kelompok dan teman), dalam bentuk anonim (tanpa UID, nama item, dan waktu): 1.424 pull, 21 S. Setelah segmen pertama dibuang: ±1.200 titik keputusan. **Tidak dipakai untuk melatih**, hanya untuk menguji. |
 
 Alasan memakai simulasi: satu akun asli hanya punya ratusan pull dengan
 beberapa S saja, terlalu sedikit untuk melatih model. Keterbatasan ini ditulis
@@ -155,6 +155,23 @@ Dua tugas klasifikasi biner:
 | Random Forest | **0,9108** | 0,7612 | 0,6669 | 0,8102 | 0,2816 | 0,0771 |
 | XGBoost | **0,9108** | 0,7604 | 0,6661 | 0,8098 | 0,2816 | 0,0771 |
 
+
+### Uji di data asli pemain (2 akun, model dilatih hanya dengan data simulasi)
+
+Pengujian ini menjawab pertanyaan: *apakah model yang dilatih dari simulasi
+tetap akurat untuk pemain sungguhan?*
+
+| Model | Tugas A Accuracy | Tugas B Accuracy | Tugas B Balanced Acc. | Tugas B F1 | Tugas B Log Loss |
+|---|---|---|---|---|---|
+| Baseline: selalu "tidak S" | 0,9862 | 0,8649 | 0,5000 | 0,0000 | 2,1770 |
+| Markov Chain (teori) | 0,9870 | 0,9354 | 0,7818 | 0,7050 | 0,2321 |
+| Logistic Regression | 0,9862 | 0,9111 | 0,6734 | 0,5138 | 0,2712 |
+| Decision Tree | **0,9870** | 0,9329 | 0,7725 | 0,6899 | **0,2325** |
+| Random Forest | **0,9870** | 0,9329 | 0,7751 | 0,6923 | 0,2326 |
+| XGBoost | **0,9870** | **0,9337** | **0,7756** | **0,6950** | **0,2325** |
+
+Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
+
 ## 6. Pembahasan
 
 1. **Jebakan akurasi (Tugas A).** Model yang selalu menebak "tidak dapat S"
@@ -177,7 +194,13 @@ Dua tugas klasifikasi biner:
 5. **Fitur `guaranteed` hampir tidak berpengaruh** (feature importance ≈ 0).
    Ini benar secara aturan game: guaranteed hanya menentukan *S mana* yang
    keluar, bukan *kapan* S keluar.
-6. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
+6. **Terbukti di data asli.** Urutan hasil di data 2 akun asli sama dengan
+   di simulasi: model pohon ±93,3%, Logistic Regression ±91,1%, baseline
+   ±86,5%, dan Markov (teori) ±93,5%. Artinya asumsi soft pity yang dipakai
+   simulasi cocok dengan perilaku gacha sungguhan. Selain itu, pity dan status
+   guaranteed yang dihitung aplikasi untuk akun asli **sama persis** dengan
+   yang tampil di game.
+7. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
    (teori), karena hasil gacha memang acak. Model terbaik adalah yang paling
    mendekati peluang sebenarnya.
 
@@ -186,7 +209,9 @@ Dua tugas klasifikasi biner:
 - Titik mulai soft pity adalah estimasi komunitas, bukan angka resmi.
 - Data latih utama berasal dari simulasi berdasarkan model 4.1, sehingga model
   ML "belajar ulang" asumsi tersebut. Data asli pemain dipakai untuk menguji
-  apakah asumsi itu cocok dengan kenyataan. Makin banyak data asli, makin kuat
+  apakah asumsi itu cocok dengan kenyataan, dan hasilnya cocok.
+- Data asli baru 2 akun (17 S pada Tugas A), sehingga angka uji data asli
+  masih bisa bergeser kalau datanya ditambah. Makin banyak akun, makin kuat
   kesimpulannya.
 - Penentuan menang/kalah 50/50 memakai daftar S standar di `config.py`. Daftar
   ini harus diperbarui kalau HoYoverse menambah isi banner standar.
@@ -197,20 +222,18 @@ Dua tugas klasifikasi biner:
 - Sistem pity ZZZ dapat dimodelkan secara eksak dengan Markov Chain; aplikasi
   memakainya untuk menghitung peluang dapat S/S rate-up dalam N pull.
 - Untuk memprediksi keluarnya S, **Decision Tree, Random Forest, dan XGBoost**
-  memberikan akurasi tertinggi (±91,1% pada tugas 10 pull) dan hampir sama
-  dengan batas teoretis, sedangkan Logistic Regression paling rendah.
+  memberikan akurasi tertinggi (±91,1% pada tugas 10 pull di simulasi, ±93,3%
+  di data asli) dan hampir sama dengan batas teoretis, sedangkan Logistic
+  Regression paling rendah.
 - **Accuracy tidak cukup** untuk data tidak seimbang; perlu metrik pendukung
   seperti Balanced Accuracy, F1, ROC-AUC, dan Log Loss.
 
-## 9. Pembagian tugas kelompok (usulan)
+## 9. Anggota kelompok
 
-| Anggota | Tugas |
-|---|---|
-| Pemain ZZZ #1 | Ambil data asli sendiri + dari teman, uji fitur PowerShell & import |
-| Pemain ZZZ #2 | Sama seperti #1, cek kebenaran pity/50-50 dibanding game |
-| Anggota #3 | Uji aplikasi di HP/tablet (input manual, upload, data contoh), catat bug |
-| Anggota #4 | Laporan bab 1–4 (latar belakang, teori, metodologi) |
-| Anggota #5 | Laporan bab 5–6 (hasil & pembahasan) + slide presentasi |
-
-Anggota yang tidak punya game tetap bisa menguji seluruh aplikasi memakai
-**Data Contoh** dan **Input Manual**.
+| NIM | Nama | Peran |
+|---|---|---|
+| A11.2024.16004 | Syafiq Yahya | Ketua kelompok, mempresentasikan hasil proyek |
+| A11.2024.15851 | Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii)) | Pengembang aplikasi, pengumpulan dan pengujian data asli |
+| A11.2024.15842 | Gastiadirrijal Rafi M | Penyusun slide presentasi |
+| A11.2024.15826 | Zabrina Miftah Z | Penyusun proposal proyek |
+| A11.2024.15804 | Rayya Hasya Tamimi | Penyusun proposal proyek |
