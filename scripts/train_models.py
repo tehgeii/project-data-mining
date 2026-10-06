@@ -106,6 +106,23 @@ def main(argv: list[str] | None = None) -> dict:
         test_scores = M.evaluate_all(fitted, test)
         has_real = len(real) > 0 and real["is_s"].nunique() == 2
         real_scores = M.evaluate_all(fitted, real) if has_real else None
+
+        # Eksperimen tambahan: latih DAN uji hanya dengan data asli.
+        # Data asli hanya beberapa akun, jadi dibagi per siklus pity (GroupKFold).
+        real_cv = None
+        if has_real:
+            real_cyc = M.add_cycle_groups(real)
+            if real_cyc["cycle_group"].nunique() >= 5:
+                print(f"      Latih-uji di data asli saja ({len(real_cyc)} baris, "
+                      f"{real_cyc['cycle_group'].nunique()} siklus pity) ...")
+                real_cv = M.cross_validate(real_cyc, n_splits=5, random_state=args.seed,
+                                           horizon=horizon, groups="cycle_group")
+                real_cv.update({
+                    "rows": int(len(real_cyc)),
+                    "positives": int(real_cyc["is_s"].sum()),
+                    "groups": int(real_cyc["cycle_group"].nunique()),
+                    "accounts": int(real_cyc["account"].nunique()),
+                })
         all_models[task_key] = fitted
 
         report["tasks"][task_key] = {
@@ -124,6 +141,7 @@ def main(argv: list[str] | None = None) -> dict:
             "cross_validation": cv,
             "test": test_scores,
             "real": real_scores,
+            "real_cv": real_cv,
             "curves": M.probability_curves(fitted),
             "empirical": {
                 "sim": {b: M.empirical_curve(sim, b) for b in (AGENT.key, WENGINE.key)},

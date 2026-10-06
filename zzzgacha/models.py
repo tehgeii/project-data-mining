@@ -206,14 +206,17 @@ def split_by_account(df: pd.DataFrame, test_size: float = 0.2, random_state: int
     return df.iloc[train_idx].reset_index(drop=True), df.iloc[test_idx].reset_index(drop=True)
 
 
-def cross_validate(df: pd.DataFrame, n_splits: int = 5, random_state: int = 42, horizon: int = 1) -> dict:
-    """GroupKFold per akun. Mengembalikan rata-rata dan standar deviasi metrik."""
-    n_groups = df["account"].nunique()
+def cross_validate(
+    df: pd.DataFrame, n_splits: int = 5, random_state: int = 42, horizon: int = 1, groups: str = "account"
+) -> dict:
+    """GroupKFold per kelompok (default: per akun). Mengembalikan rata-rata dan
+    standar deviasi metrik."""
+    n_groups = df[groups].nunique()
     n_splits = min(n_splits, n_groups)
     if n_splits < 2:
-        raise ValueError("Butuh minimal 2 akun untuk cross-validation.")
+        raise ValueError("Butuh minimal 2 kelompok data untuk cross-validation.")
     scores: dict[str, list[dict]] = {}
-    for train_idx, test_idx in GroupKFold(n_splits=n_splits).split(df, groups=df["account"]):
+    for train_idx, test_idx in GroupKFold(n_splits=n_splits).split(df, groups=df[groups]):
         train, test = df.iloc[train_idx], df.iloc[test_idx]
         for name, model in make_models(random_state, horizon).items():
             model.fit(train[FEATURES], train[TARGET])
@@ -230,6 +233,21 @@ def cross_validate(df: pd.DataFrame, n_splits: int = 5, random_state: int = 42, 
             for m in metric_names
         }
     return {"n_splits": n_splits, "scores": summary}
+
+
+def add_cycle_groups(df: pd.DataFrame) -> pd.DataFrame:
+    """Tandai setiap baris dengan siklus pity-nya (dari pity 0 sampai dapat S).
+
+    Dipakai untuk cross-validation di data asli yang hanya berisi sedikit akun:
+    data dibagi per siklus pity, bukan per baris, sehingga pull dari siklus yang
+    sama tidak pernah ada di data latih dan data uji sekaligus. Siklus pity
+    saling bebas karena peluang selalu kembali ke awal setelah dapat S.
+    """
+    out = df.copy()
+    keys = out["account"].astype(str) + "|" + out["banner"].astype(str)
+    cycle = (out["pity"] == 0).astype(int).groupby(keys).cumsum()
+    out["cycle_group"] = keys + "|" + cycle.astype(str)
+    return out
 
 
 def fit_all(train: pd.DataFrame, random_state: int = 42, horizon: int = 1) -> dict[str, BaseEstimator]:

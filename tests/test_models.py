@@ -121,4 +121,15 @@ def test_training_script_end_to_end(tmp_path):
     report = json.loads((out / "report.json").read_text())
     assert set(report["tasks"]) == set(M.TASKS)
     assert report["tasks"]["next_10"]["real"] is not None
+    real_cv = report["tasks"]["next_10"]["real_cv"]
+    assert real_cv is not None and real_cv["rows"] > 0 and real_cv["groups"] >= 5
     assert (out / "models.joblib").exists()
+
+
+def test_cycle_groups_split_on_pity_reset():
+    frame = pd.DataFrame(
+        {"account": "a", "banner": "agent", "pity": [0, 1, 2, 0, 1, 0], "guaranteed": 0,
+         "pity_ratio": 0.0, "is_wengine": 0, "is_s": [0, 0, 1, 0, 1, 0]}
+    )
+    g = M.add_cycle_groups(frame)["cycle_group"].tolist()
+    assert g[0] == g[1] == g[2] and g[3] == g[4] and len(set(g)) == 3

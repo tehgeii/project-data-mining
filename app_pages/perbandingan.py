@@ -83,8 +83,8 @@ def styled(df: pd.DataFrame):
     return styler
 
 
-tab_test, tab_cv, tab_curve, tab_cm, tab_imp = st.tabs(
-    ["Hasil test", "Cross-validation", "Kurva peluang", "Confusion matrix", "Fitur"]
+tab_test, tab_cv, tab_real, tab_curve, tab_cm, tab_imp = st.tabs(
+    ["Hasil test", "Cross-validation", "Latih di data asli", "Kurva peluang", "Confusion matrix", "Fitur"]
 )
 
 with tab_test:
@@ -139,6 +139,46 @@ with tab_cv:
         rows.append(row)
     st.write(f"GroupKFold {cv['n_splits']}-fold (dibagi per akun), rata-rata ± standar deviasi:")
     st.dataframe(pd.DataFrame(rows), hide_index=True)
+
+
+def cv_table(cv: dict) -> pd.DataFrame:
+    rows = []
+    for name, s in cv["scores"].items():
+        row = {"Model": name}
+        for m, (label, _) in METRICS.items():
+            if m in s and s[m]["mean"] is not None:
+                row[label] = f"{s[m]['mean']:.4f} ± {s[m]['std']:.4f}"
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+with tab_real:
+    rcv = task.get("real_cv")
+    if not rcv:
+        st.info("Belum ada data asli yang cukup di `data/real/` untuk eksperimen ini.")
+    else:
+        st.markdown(
+            f"Semua algoritma **dilatih dan diuji hanya dengan data asli pemain** "
+            f"({rcv['accounts']} akun, **{rcv['rows']:,} baris**, {rcv['positives']} kelas positif). "
+            f"Data dibagi per **siklus pity** ({rcv['groups']} siklus, GroupKFold {rcv['n_splits']}-fold), "
+            "supaya pull dari siklus yang sama tidak ada di data latih dan data uji sekaligus."
+        )
+        st.dataframe(cv_table(rcv), hide_index=True)
+        acc = {n: s["accuracy"]["mean"] for n, s in rcv["scores"].items() if n in ML_MODELS}
+        best = max(acc, key=acc.get)
+        fig = go.Figure(go.Bar(
+            x=list(acc.keys()), y=[v * 100 for v in acc.values()],
+            marker_color=[MODEL_COLORS.get(n, "#58A6FF") for n in acc],
+            text=[f"{v * 100:.1f}%" for v in acc.values()], textposition="outside",
+        ))
+        fig.update_layout(title="Accuracy (data asli saja)", yaxis_range=[80, 100], yaxis_title="Accuracy (%)",
+                          height=360, margin=dict(l=10, r=10, t=50, b=10))
+        st.plotly_chart(fig, config={"displayModeBar": False})
+        st.caption(
+            f"Akurasi tertinggi: {best} ({acc[best]:.2%}). Dengan data yang jauh lebih sedikit, hasilnya tetap "
+            "sejalan dengan data simulasi. KNN memakai k = 101 tetangga; untuk data latih ±950 baris nilai k "
+            "ini terlalu besar sehingga KNN cenderung selalu menebak kelas mayoritas."
+        )
 
 with tab_curve:
     banner_key = st.segmented_control(
