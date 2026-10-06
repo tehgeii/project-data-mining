@@ -179,6 +179,31 @@ tetap akurat untuk pemain sungguhan?*
 
 Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
 
+### Eksperimen kedua: latih DAN uji hanya dengan data asli
+
+Untuk memastikan hasil tidak bergantung pada data simulasi, keenam algoritma
+juga dilatih dan diuji **hanya dengan data asli** (Tugas B: 1.192 baris, 161
+positif; sudah memenuhi ketentuan dataset tabel minimal 500–1.000 baris).
+Karena data asli hanya dari 2 akun, data dibagi per **siklus pity** (20 siklus,
+GroupKFold 5-fold): siklus pity saling bebas karena peluang selalu kembali ke
+awal setelah dapat S.
+
+| Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss |
+|---|---|---|---|---|---|
+| Baseline: selalu "tidak S" | 0,8639 ± 0,0334 | 0,5000 | 0,0000 | 0,5000 | 2,1940 |
+| Markov Chain (teori) | 0,9356 ± 0,0303 | 0,7873 | 0,6952 | 0,8160 | 0,2318 |
+| Naive Bayes | 0,8798 ± 0,0296 | **0,8368** | 0,6257 | 0,9049 | 0,3673 |
+| KNN | 0,8741 ± 0,0287 | 0,5300 | 0,0923 | 0,8762 | 0,4909 |
+| Logistic Regression | 0,9101 ± 0,0447 | 0,7554 | 0,5606 | 0,9087 | 0,2889 |
+| Decision Tree | **0,9298 ± 0,0253** | 0,7838 | **0,6799** | 0,9079 | 0,3490 |
+| Random Forest | 0,9287 ± 0,0221 | 0,7726 | 0,6721 | **0,9293** | **0,2409** |
+| XGBoost | 0,9261 ± 0,0334 | 0,7771 | 0,6508 | 0,9279 | 0,2470 |
+
+- Decision Tree tetap tertinggi, urutan model pohon sama seperti di simulasi.
+- Naive Bayes akurasinya rendah tetapi Balanced Accuracy tertinggi (recall ±0,77).
+- KNN turun hampir ke baseline karena k = 101 terlalu besar untuk ±950 baris latih.
+- Simpangan baku ±2–4% (simulasi ±0,2%) karena datanya jauh lebih sedikit.
+
 ## 6. Pembahasan
 
 1. **Jebakan akurasi (Tugas A).** Model yang selalu menebak "tidak dapat S"
@@ -215,7 +240,11 @@ Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
    simulasi cocok dengan perilaku gacha sungguhan. Selain itu, pity dan status
    guaranteed yang dihitung aplikasi untuk akun asli **sama persis** dengan
    yang tampil di game.
-8. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
+8. **Tidak bergantung pada simulasi.** Saat dilatih dan diuji hanya dengan
+   data asli (1.192 baris), Decision Tree (92,98%), Random Forest (92,87%), dan
+   XGBoost (92,61%) tetap terbaik. KNN turun (87,41%) karena k = 101 terlalu
+   besar untuk data kecil: hyperparameter harus disesuaikan dengan ukuran data.
+9. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
    (teori), karena hasil gacha memang acak. Model terbaik adalah yang paling
    mendekati peluang sebenarnya.
 
@@ -226,7 +255,8 @@ Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
   ML "belajar ulang" asumsi tersebut. Data asli pemain dipakai untuk menguji
   apakah asumsi itu cocok dengan kenyataan, dan hasilnya cocok.
 - Data asli baru 2 akun (17 S pada Tugas A), sehingga angka uji data asli
-  masih bisa bergeser kalau datanya ditambah. Makin banyak akun, makin kuat
+  masih bisa bergeser kalau datanya ditambah (simpangan baku eksperimen latih
+  di data asli ±2–4%). Makin banyak akun, makin kuat
   kesimpulannya.
 - Penentuan menang/kalah 50/50 memakai daftar S standar di `config.py`. Daftar
   ini harus diperbarui kalau HoYoverse menambah isi banner standar.
@@ -239,7 +269,8 @@ Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
 - Untuk memprediksi keluarnya S, **Decision Tree, Random Forest, XGBoost, dan
   KNN** memberikan akurasi tertinggi (±91,1% pada tugas 10 pull di simulasi,
   ±93,3–93,5% di data asli) dan hampir sama dengan batas teoretis, sedangkan
-  Naive Bayes dan Logistic Regression paling rendah.
+  Naive Bayes dan Logistic Regression paling rendah. Saat dilatih dan diuji
+  hanya dengan data asli (1.192 baris), Decision Tree tetap tertinggi (92,98%).
 - **Accuracy tidak cukup** untuk data tidak seimbang; perlu metrik pendukung
   seperti Balanced Accuracy, F1, ROC-AUC, dan Log Loss.
 

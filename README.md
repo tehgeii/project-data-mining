@@ -91,6 +91,9 @@ docs/                     # bahan laporan
 - **Data:** simulasi Monte Carlo 400 akun dari parameter resmi, ditambah data
   asli pemain (anonim) untuk pengujian. Pembagian train/test **per akun**
   (GroupShuffleSplit & GroupKFold) supaya tidak ada kebocoran data.
+- **Eksperimen kedua:** keenam algoritma juga dilatih dan diuji hanya dengan
+  data asli (1.192 baris, GroupKFold 5-fold per siklus pity), tab
+  "Latih di data asli" di halaman Perbandingan Algoritma.
 - **Pembanding:** baseline "selalu tebak tidak S" (membuktikan jebakan akurasi)
   dan Markov Chain (peluang teoretis).
 

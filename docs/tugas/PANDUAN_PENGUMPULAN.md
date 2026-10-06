@@ -9,7 +9,7 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 | `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal Proyek Akhir (Bab I–III, jadwal, pustaka) |
 | `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 17 slide + catatan pembicara (±20 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
-| `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 21 slide + catatan pembicara (±25 menit) |
+| `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 22 slide + catatan pembicara (±30 menit) |
 
 > Proposal UTS sudah memuat "Hasil Awal (Prototipe)" karena aplikasinya sudah jadi.
 > Sebelum dikumpulkan, baca sekali lagi dan sesuaikan kalimat yang kurang pas.
@@ -57,9 +57,9 @@ Catatan pembicara untuk setiap slide sudah ada di file `.pptx`
 | Aturan banner & landasan teori | 6–9 | 5–8 | 6 menit |
 | Metodologi & data | 10–13 | 9–11 | 5 menit |
 | Aplikasi (demo langsung) | 14 | 12–13 | 3 menit |
-| Hasil & pembahasan | 15 | 14–19 | 2 (UTS) / 8 (UAS) menit |
-| Jadwal / kesimpulan & penutup | 16–17 | 20–21 | 2 menit |
-| **Total** | | | **±24 menit (UTS) / ±30 menit (UAS)** |
+| Hasil & pembahasan | 15 | 14–20 | 2 (UTS) / 10 (UAS) menit |
+| Jadwal / kesimpulan & penutup | 16–17 | 21–22 | 2 menit |
+| **Total** | | | **±24 menit (UTS) / ±32 menit (UAS)** |
 
 Tips rekaman:
 - Rekam layar dengan OBS Studio (gratis) atau Zoom (record to computer), kamera di pojok.
@@ -69,6 +69,16 @@ Tips rekaman:
   diunggah ulang oleh tiap anggota. Pastikan dulu ke dosen kalau ragu.
 
 ## Pertanyaan yang mungkin ditanyakan dosen (dan jawabannya)
+
+**Datasetnya berapa baris? (syarat: tabel minimal 500–1.000 baris)**
+Data asli 1.424 pull (±1.200 baris setelah dibersihkan) dari 2 akun, ditambah data simulasi
+±314.000 baris. Keenam algoritma juga sudah dilatih dan diuji **hanya dengan data asli**
+(1.192 baris, 5-fold per siklus pity): Decision Tree tetap tertinggi (±93,0%).
+
+**Kenapa KNN turun saat dilatih dengan data asli saja?**
+Nilai k = 101 tetangga terlalu besar untuk data latih ±950 baris yang hanya berisi ±130 kelas
+positif, sehingga tetangga terdekat hampir selalu kelas mayoritas. Ini menunjukkan hyperparameter
+harus disesuaikan dengan ukuran data.
 
 **Kenapa memakai data simulasi?**
 Satu akun asli hanya punya ratusan pull dan beberapa S-Rank, terlalu sedikit untuk melatih.
