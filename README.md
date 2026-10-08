@@ -48,9 +48,9 @@ python scripts/train_models.py          # latih ulang model (±1-2 menit)
 
 ## Deploy ke Streamlit Community Cloud (gratis, bisa dibuka di HP)
 
-1. Pastikan kode sudah ada di GitHub (saat ini branch `claude/cool-mayer-84l96p`).
+1. Pastikan kode sudah ada di GitHub (branch `main`).
 2. Buka <https://share.streamlit.io>, login dengan akun GitHub.
-3. **Create app** → pilih repository ini, branch `claude/cool-mayer-84l96p`, main file `streamlit_app.py`.
+3. **Create app** → pilih repository ini, branch `main`, main file `streamlit_app.py`.
 4. Di **Advanced settings**, pilih Python **3.12**.
 5. **Deploy**. Link `https://<nama-app>.streamlit.app` bisa dibuka dari HP, tablet, maupun laptop.
 
