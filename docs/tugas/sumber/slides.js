@@ -66,7 +66,7 @@ function chartBars(s, names, series, x, y, w, h, o = {}) {
 
 const NAMES = ["Baseline", "Markov (teori)", "Naive Bayes", "KNN", "Log. Regression", "Decision Tree", "Random Forest", "XGBoost"];
 const ACC_SIM = [83.4, 91.1, 85.7, 91.1, 88.9, 91.1, 91.1, 91.1];
-const ACC_REAL = [86.5, 93.5, 87.7, 93.5, 91.1, 93.3, 93.3, 93.4];
+const ACC_REAL = [86.6, 93.5, 87.5, 93.5, 91.1, 93.3, 93.3, 93.4];
 const TEAM = [["NIM", "Nama", "Peran"],
   ["A11.2024.16004", "Syafiq Yahya", "Ketua kelompok, presentasi hasil"],
   ["A11.2024.15851", "Dafi Hauzan A.H", "Pengembang aplikasi, pengumpulan & pengujian data"],
@@ -186,10 +186,10 @@ function crisp() {
 function data() {
   const s = base("Data: simulasi + data asli pemain", "Data");
   card(s, M, 1.8, 5.9, 2.4, "Simulasi Monte Carlo", "400 akun virtual · ±314 ribu pull · dibangkitkan dari model Markov (seed 42). Dipakai untuk melatih dan menguji.", C.blue, { bsize: 16 });
-  card(s, 6.8, 1.8, 5.9, 2.4, "Data asli (2 akun)", "1.424 pull · 21 S-Rank · anonim. Dipakai untuk menguji model, dan dalam eksperimen kedua untuk melatih + menguji sendiri (1.192 baris).", C.green, { bsize: 16 });
+  card(s, 6.8, 1.8, 5.9, 2.4, "Data asli (2 akun)", "1.441 pull · 22 S-Rank · anonim. Dipakai untuk menguji model, dan dalam eksperimen kedua untuk melatih + menguji sendiri (1.209 baris).", C.green, { bsize: 16 });
   T(s, "Cara ambil data asli:", { x: M, y: 4.55, w: 12, h: 0.4, fontSize: 16, bold: true });
   bullets(s, ["Script PowerShell membaca URL riwayat dari cache game di PC (Steam/HoYoPlay) → server HoYoverse", "Upload file UIGF v4 (cocok untuk HP) atau input manual pity", "Pra-pemrosesan: buang duplikat, urutkan per akun, hitung pity & guaranteed, buang segmen pertama yang tidak lengkap"], M, 5.0, 12, 1.8, 15);
-  s.addNotes("Data (±1,5 menit). Riwayat satu akun terlalu sedikit untuk melatih model, jadi data latih memakai simulasi Monte Carlo dari model Markov, 400 akun. Data asli dua akun, 1.424 baris, sudah memenuhi syarat dataset tabel minimal 500 sampai 1000 baris. Data asli dipakai untuk menguji, dan di eksperimen kedua keenam algoritma juga dilatih dan diuji hanya dengan data asli. Jelaskan cara pengambilan data asli lewat script PowerShell yang hanya membaca cache game, dan bahwa authkey tidak disimpan.");
+  s.addNotes("Data (±1,5 menit). Riwayat satu akun terlalu sedikit untuk melatih model, jadi data latih memakai simulasi Monte Carlo dari model Markov, 400 akun. Data asli dua akun, 1.441 pull, sudah memenuhi syarat dataset tabel minimal 500 sampai 1000 baris. Data asli dipakai untuk menguji, dan di eksperimen kedua keenam algoritma juga dilatih dan diuji hanya dengan data asli. Jelaskan cara pengambilan data asli lewat script PowerShell yang hanya membaca cache game, dan bahwa authkey tidak disimpan.");
 }
 function fitur() {
   const s = base("Fitur dan target", "Data preparation");
@@ -207,7 +207,7 @@ function skenario() {
     ["Latih di data asli", "Eksperimen kedua: latih + uji hanya data asli, 5-fold per siklus pity.", C.purple]];
   it.forEach(([t, b, c], k) => card(s, M + k * 3.07, 2.0, 2.87, 3.2, t, b, c, { icon: String(k + 1), bsize: 15 }));
   T(s, "Pembanding: Baseline (selalu \"tidak S\") dan Markov Chain (batas teori).", { x: M, y: 5.5, w: 12, h: 0.5, fontSize: 16, color: C.mut });
-  s.addNotes("Skenario evaluasi (±1 menit). Pembagian data per akun mencegah kebocoran, karena pull yang berurutan saling berkaitan. Cross-validation lima fold untuk hasil yang stabil, lalu uji akhir di data asli. Eksperimen keempat: semua algoritma dilatih dan diuji hanya dengan data asli, 1.192 baris, dibagi per siklus pity menjadi 5 bagian, supaya hasil tidak bergantung pada data simulasi.");
+  s.addNotes("Skenario evaluasi (±1 menit). Pembagian data per akun mencegah kebocoran, karena pull yang berurutan saling berkaitan. Cross-validation lima fold untuk hasil yang stabil, lalu uji akhir di data asli. Eksperimen keempat: semua algoritma dilatih dan diuji hanya dengan data asli, 1.209 baris, dibagi per siklus pity menjadi 5 bagian, supaya hasil tidak bergantung pada data simulasi.");
 }
 function screenshot(title, eyebrow, file, points, notes) {
   const s = base(title, eyebrow);
@@ -243,7 +243,7 @@ function uts() {
   { const s = base("Hasil awal prototipe (tugas B)", "Progres");
     chartBars(s, NAMES, [{ name: "Simulasi (5-fold CV)", values: ACC_SIM, color: C.blue }, { name: "Data asli (2 akun)", values: ACC_REAL, color: C.acc }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%)" });
     card(s, 9.3, 1.8, 3.4, 4.8, "Temuan awal", "Prototipe sudah jalan. Pity akun asli yang dihitung aplikasi sama persis dengan di game. Model pohon & KNN ±91% (simulasi) dan ±93% (data asli). Latih di data asli saja: Decision Tree ±93%.", C.green, { bsize: 15 });
-    s.addNotes("Hasil awal (±2 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Validasi: pity akun asli 70 dari 90 dan 46 dari 80 sama persis dengan di game. Hasil awal tugas B: model pohon dan KNN sekitar 91 persen di simulasi dan 93 persen di data asli, Logistic Regression dan Naive Bayes lebih rendah. Eksperimen latih dan uji dengan data asli saja, 1.192 baris, juga sudah dilakukan: Decision Tree tetap tertinggi sekitar 93 persen. Hasil lengkap akan dibahas di laporan akhir."); }
+    s.addNotes("Hasil awal (±2 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Validasi: saat dicek, pity akun asli 70 dari 90 dan 46 dari 80 sama persis dengan di game. Hasil awal tugas B: model pohon dan KNN sekitar 91 persen di simulasi dan 93 persen di data asli, Logistic Regression dan Naive Bayes lebih rendah. Eksperimen latih dan uji dengan data asli saja, 1.209 baris, juga sudah dilakukan: Decision Tree tetap tertinggi sekitar 93 persen. Hasil lengkap akan dibahas di laporan akhir."); }
   { const s = base("Jadwal kegiatan", "Rencana");
     table(s, [["Kegiatan", "M1", "M2", "M3", "M4"],
       ["Studi literatur & aturan gacha", "✓", "", "", ""], ["Pengumpulan data & simulasi", "✓", "✓", "", ""],
@@ -290,10 +290,10 @@ function uas() {
       M, 1.8, 12.1, [3.6, 1.7, 1.7, 1.7, 1.7, 1.7], { size: 14, rowH: 0.52, hlRows: [4, 6, 7, 8] });
     s.addNotes("Metrik lengkap (±1,5 menit). Baris kuning adalah empat algoritma terbaik. Decision Tree terbaik di balanced accuracy, F1, ROC-AUC, dan log loss, walau selisihnya kecil dengan Random Forest, XGBoost, dan KNN."); }
   { const s = base("Latih & uji hanya dengan data asli", "Hasil · eksperimen kedua");
-    chartBars(s, NAMES, [{ name: "Accuracy (%)", values: [86.4, 93.6, 88.0, 87.4, 91.0, 93.0, 92.9, 92.6], color: C.green }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%) — 1.192 baris data asli, 5-fold per siklus pity" });
-    card(s, 9.3, 1.8, 3.4, 2.5, "Tetap konsisten", "Decision Tree 93,0%, Random Forest 92,9%, XGBoost 92,6%: urutan sama seperti di simulasi.", C.acc, { bsize: 14 });
-    card(s, 9.3, 4.5, 3.4, 2.2, "KNN turun", "k = 101 terlalu besar untuk ±950 baris latih → hampir selalu menebak mayoritas.", C.pink, { bsize: 14 });
-    s.addNotes("Eksperimen kedua (±2 menit). Untuk menjawab apakah model hanya bagus di data simulasi, kami melatih dan menguji keenam algoritma hanya dengan data asli: 1.192 baris dari 2 akun, sudah di atas syarat 500 sampai 1000 baris. Data dibagi per siklus pity menjadi 5 bagian. Hasilnya: Decision Tree 93,0 persen, Random Forest 92,9 persen, XGBoost 92,6 persen, urutannya sama seperti di simulasi dan hampir menyamai batas teori Markov 93,6 persen. Logistic Regression 91,0 persen dan Naive Bayes 88,0 persen. KNN turun ke 87,4 persen karena nilai k = 101 terlalu besar untuk data sekecil ini, jadi KNN hampir selalu menebak kelas mayoritas. Pelajarannya: hyperparameter harus disesuaikan dengan ukuran data."); }
+    chartBars(s, NAMES, [{ name: "Accuracy (%)", values: [86.6, 93.7, 87.9, 87.4, 90.7, 93.1, 93.0, 92.2], color: C.green }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%) — 1.209 baris data asli, 5-fold per siklus pity" });
+    card(s, 9.3, 1.8, 3.4, 2.5, "Tetap konsisten", "Decision Tree 93,1%, Random Forest 93,0%, XGBoost 92,2%: urutan sama seperti di simulasi.", C.acc, { bsize: 14 });
+    card(s, 9.3, 4.5, 3.4, 2.2, "KNN turun", "k = 101 terlalu besar untuk ±970 baris latih → hampir selalu menebak mayoritas.", C.pink, { bsize: 14 });
+    s.addNotes("Eksperimen kedua (±2 menit). Untuk menjawab apakah model hanya bagus di data simulasi, kami melatih dan menguji keenam algoritma hanya dengan data asli: 1.209 baris dari 2 akun, sudah di atas syarat 500 sampai 1000 baris. Data dibagi per siklus pity menjadi 5 bagian. Hasilnya: Decision Tree 93,1 persen, Random Forest 93,0 persen, XGBoost 92,2 persen, urutannya sama seperti di simulasi dan hampir menyamai batas teori Markov 93,7 persen. Logistic Regression 90,7 persen dan Naive Bayes 87,9 persen. KNN turun ke 87,4 persen karena nilai k = 101 terlalu besar untuk data sekecil ini, jadi KNN hampir selalu menebak kelas mayoritas. Pelajarannya: hyperparameter harus disesuaikan dengan ukuran data."); }
   { const s = base("Model pohon menemukan soft pity sendiri", "Pembahasan");
     img(s, "fig_kurva.png", M, 1.7, 8.2, 3.6);
     bullets(s, ["Garis putus-putus = peluang teori (Markov)", "Pohon & KNN menempel ke teori, termasuk lonjakan soft pity", "Logistic Regression & Naive Bayes hanya kurva halus → meleset"], M, 5.5, 12, 1.4, 15);

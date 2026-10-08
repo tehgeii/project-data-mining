@@ -167,10 +167,12 @@ with tab_real:
         fig.update_layout(title="Accuracy (data asli saja)", yaxis_range=[80, 100], yaxis_title="Accuracy (%)",
                           height=360, margin=dict(l=10, r=10, t=50, b=10))
         st.plotly_chart(fig, config={"displayModeBar": False})
+        # rata-rata ukuran data latih per fold (4 dari 5 bagian), dibulatkan ke puluhan
+        train_rows = round(rcv["rows"] * (rcv["n_splits"] - 1) / rcv["n_splits"], -1)
         st.caption(
             f"Akurasi tertinggi: {best} ({acc[best]:.2%}). Dengan data yang jauh lebih sedikit, hasilnya tetap "
-            "sejalan dengan data simulasi. KNN memakai k = 101 tetangga; untuk data latih ±950 baris nilai k "
-            "ini terlalu besar sehingga KNN cenderung selalu menebak kelas mayoritas."
+            f"sejalan dengan data simulasi. KNN memakai k = 101 tetangga; untuk data latih ±{train_rows:,.0f} "
+            "baris nilai k ini terlalu besar sehingga KNN cenderung selalu menebak kelas mayoritas."
         )
 
 with tab_curve:
