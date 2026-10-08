@@ -78,7 +78,7 @@ dalam N pull". Hasilnya diverifikasi dengan simulasi Monte Carlo 400.000 pull
 | Sumber | Keterangan |
 |---|---|
 | **Simulasi Monte Carlo** | 400 akun virtual, masing-masing 80–700 pull per banner, dibangkitkan dari model 4.1 (seed 42). Total ±314.000 pull. |
-| **Data asli** | 2 akun pemain (anggota kelompok dan teman), dalam bentuk anonim (tanpa UID, nama item, dan waktu): 1.424 pull, 21 S. Setelah segmen pertama dibuang: ±1.200 titik keputusan. **Tidak dipakai untuk melatih**, hanya untuk menguji. |
+| **Data asli** | 2 akun pemain (anggota kelompok dan teman), dalam bentuk anonim (tanpa UID, nama item, dan waktu): 1.441 pull, 22 S. Setelah segmen pertama dibuang: ±1.200 titik keputusan. **Tidak dipakai untuk melatih**, hanya untuk menguji. |
 
 Alasan memakai simulasi: satu akun asli hanya punya ratusan pull dengan
 beberapa S saja, terlalu sedikit untuk melatih model. Keterbatasan ini ditulis
@@ -168,21 +168,21 @@ tetap akurat untuk pemain sungguhan?*
 
 | Model | Tugas A Accuracy | Tugas B Accuracy | Tugas B Balanced Acc. | Tugas B F1 | Tugas B Log Loss |
 |---|---|---|---|---|---|
-| Baseline: selalu "tidak S" | 0,9862 | 0,8649 | 0,5000 | 0,0000 | 2,1770 |
-| Markov Chain (teori) | 0,9870 | 0,9354 | 0,7818 | 0,7050 | 0,2321 |
-| Naive Bayes | 0,9862 | 0,8767 | **0,7898** | 0,5950 | 0,2791 |
-| KNN | **0,9870** | **0,9346** | 0,7787 | **0,7000** | **0,2295** |
-| Logistic Regression | 0,9862 | 0,9111 | 0,6734 | 0,5138 | 0,2712 |
-| Decision Tree | **0,9870** | 0,9329 | 0,7725 | 0,6899 | 0,2325 |
-| Random Forest | **0,9870** | 0,9329 | 0,7751 | 0,6923 | 0,2326 |
-| XGBoost | **0,9870** | 0,9337 | 0,7756 | 0,6950 | 0,2325 |
+| Baseline: selalu "tidak S" | 0,9855 | 0,8660 | 0,5000 | 0,0000 | 2,1597 |
+| Markov Chain (teori) | 0,9863 | 0,9355 | 0,7801 | 0,7023 | 0,2312 |
+| Naive Bayes | 0,9855 | 0,8751 | **0,7896** | 0,5908 | 0,2821 |
+| KNN | **0,9863** | **0,9347** | 0,7770 | **0,6973** | **0,2287** |
+| Logistic Regression | 0,9855 | 0,9115 | 0,6724 | 0,5114 | 0,2733 |
+| Decision Tree | **0,9863** | 0,9330 | 0,7709 | 0,6873 | 0,2316 |
+| Random Forest | **0,9863** | 0,9330 | 0,7735 | 0,6897 | 0,2317 |
+| XGBoost | **0,9863** | 0,9338 | 0,7740 | 0,6923 | 0,2316 |
 
-Data asli: Tugas A 1.228 baris (17 S), Tugas B 1.192 baris (161 positif).
+Data asli: Tugas A 1.245 baris (18 S), Tugas B 1.209 baris (162 positif).
 
 ### Eksperimen kedua: latih DAN uji hanya dengan data asli
 
 Untuk memastikan hasil tidak bergantung pada data simulasi, keenam algoritma
-juga dilatih dan diuji **hanya dengan data asli** (Tugas B: 1.192 baris, 161
+juga dilatih dan diuji **hanya dengan data asli** (Tugas B: 1.209 baris, 162
 positif; sudah memenuhi ketentuan dataset tabel minimal 500–1.000 baris).
 Karena data asli hanya dari 2 akun, data dibagi per **siklus pity** (20 siklus,
 GroupKFold 5-fold): siklus pity saling bebas karena peluang selalu kembali ke
@@ -190,18 +190,18 @@ awal setelah dapat S.
 
 | Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss |
 |---|---|---|---|---|---|
-| Baseline: selalu "tidak S" | 0,8639 ± 0,0334 | 0,5000 | 0,0000 | 0,5000 | 2,1940 |
-| Markov Chain (teori) | 0,9356 ± 0,0303 | 0,7873 | 0,6952 | 0,8160 | 0,2318 |
-| Naive Bayes | 0,8798 ± 0,0296 | **0,8368** | 0,6257 | 0,9049 | 0,3673 |
-| KNN | 0,8741 ± 0,0287 | 0,5300 | 0,0923 | 0,8762 | 0,4909 |
-| Logistic Regression | 0,9101 ± 0,0447 | 0,7554 | 0,5606 | 0,9087 | 0,2889 |
-| Decision Tree | **0,9298 ± 0,0253** | 0,7838 | **0,6799** | 0,9079 | 0,3490 |
-| Random Forest | 0,9287 ± 0,0221 | 0,7726 | 0,6721 | **0,9293** | **0,2409** |
-| XGBoost | 0,9261 ± 0,0334 | 0,7771 | 0,6508 | 0,9279 | 0,2470 |
+| Baseline: selalu "tidak S" | 0,8657 ± 0,0289 | 0,5000 | 0,0000 | 0,5000 | 2,1651 |
+| Markov Chain (teori) | 0,9368 ± 0,0318 | 0,7854 | 0,6964 | 0,8205 | 0,2281 |
+| Naive Bayes | 0,8788 ± 0,0299 | **0,8317** | 0,6178 | 0,8964 | 0,3690 |
+| KNN | 0,8742 ± 0,0224 | 0,5250 | 0,0800 | 0,8609 | 0,4975 |
+| Logistic Regression | 0,9069 ± 0,0429 | 0,7348 | 0,5335 | 0,8998 | 0,2879 |
+| Decision Tree | **0,9310 ± 0,0291** | 0,7835 | **0,6819** | 0,9021 | 0,3521 |
+| Random Forest | 0,9299 ± 0,0264 | 0,7696 | 0,6720 | **0,9258** | **0,2321** |
+| XGBoost | 0,9222 ± 0,0348 | 0,7678 | 0,6370 | 0,9257 | 0,2495 |
 
 - Decision Tree tetap tertinggi, urutan model pohon sama seperti di simulasi.
-- Naive Bayes akurasinya rendah tetapi Balanced Accuracy tertinggi (recall ±0,77).
-- KNN turun hampir ke baseline karena k = 101 terlalu besar untuk ±950 baris latih.
+- Naive Bayes akurasinya rendah tetapi Balanced Accuracy tertinggi (recall ±0,76).
+- KNN turun hampir ke baseline karena k = 101 terlalu besar untuk ±970 baris latih.
 - Simpangan baku ±2–4% (simulasi ±0,2%) karena datanya jauh lebih sedikit.
 
 ## 6. Pembahasan
@@ -236,13 +236,13 @@ awal setelah dapat S.
    keluar, bukan *kapan* S keluar.
 7. **Terbukti di data asli.** Urutan hasil di data 2 akun asli sama dengan
    di simulasi: KNN ±93,5% dan model pohon ±93,3%, Logistic Regression ±91,1%,
-   Naive Bayes ±87,7%, baseline ±86,5%, dan Markov (teori) ±93,5%. Artinya asumsi soft pity yang dipakai
+   Naive Bayes ±87,5%, baseline ±86,6%, dan Markov (teori) ±93,5%. Artinya asumsi soft pity yang dipakai
    simulasi cocok dengan perilaku gacha sungguhan. Selain itu, pity dan status
    guaranteed yang dihitung aplikasi untuk akun asli **sama persis** dengan
    yang tampil di game.
 8. **Tidak bergantung pada simulasi.** Saat dilatih dan diuji hanya dengan
-   data asli (1.192 baris), Decision Tree (92,98%), Random Forest (92,87%), dan
-   XGBoost (92,61%) tetap terbaik. KNN turun (87,41%) karena k = 101 terlalu
+   data asli (1.209 baris), Decision Tree (93,10%), Random Forest (92,99%), dan
+   XGBoost (92,22%) tetap terbaik. KNN turun (87,42%) karena k = 101 terlalu
    besar untuk data kecil: hyperparameter harus disesuaikan dengan ukuran data.
 9. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
    (teori), karena hasil gacha memang acak. Model terbaik adalah yang paling
@@ -254,7 +254,7 @@ awal setelah dapat S.
 - Data latih utama berasal dari simulasi berdasarkan model 4.1, sehingga model
   ML "belajar ulang" asumsi tersebut. Data asli pemain dipakai untuk menguji
   apakah asumsi itu cocok dengan kenyataan, dan hasilnya cocok.
-- Data asli baru 2 akun (17 S pada Tugas A), sehingga angka uji data asli
+- Data asli baru 2 akun (18 S pada Tugas A), sehingga angka uji data asli
   masih bisa bergeser kalau datanya ditambah (simpangan baku eksperimen latih
   di data asli ±2–4%). Makin banyak akun, makin kuat
   kesimpulannya.
@@ -270,7 +270,7 @@ awal setelah dapat S.
   KNN** memberikan akurasi tertinggi (±91,1% pada tugas 10 pull di simulasi,
   ±93,3–93,5% di data asli) dan hampir sama dengan batas teoretis, sedangkan
   Naive Bayes dan Logistic Regression paling rendah. Saat dilatih dan diuji
-  hanya dengan data asli (1.192 baris), Decision Tree tetap tertinggi (92,98%).
+  hanya dengan data asli (1.209 baris), Decision Tree tetap tertinggi (93,10%).
 - **Accuracy tidak cukup** untuk data tidak seimbang; perlu metrik pendukung
   seperti Balanced Accuracy, F1, ROC-AUC, dan Log Loss.
 

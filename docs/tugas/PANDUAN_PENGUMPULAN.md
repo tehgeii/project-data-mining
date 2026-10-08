@@ -72,12 +72,12 @@ Tips rekaman:
 ## Pertanyaan yang mungkin ditanyakan dosen (dan jawabannya)
 
 **Datasetnya berapa baris? (syarat: tabel minimal 500–1.000 baris)**
-Data asli 1.424 pull (±1.200 baris setelah dibersihkan) dari 2 akun, ditambah data simulasi
+Data asli 1.441 pull (±1.200 baris setelah dibersihkan) dari 2 akun, ditambah data simulasi
 ±314.000 baris. Keenam algoritma juga sudah dilatih dan diuji **hanya dengan data asli**
-(1.192 baris, 5-fold per siklus pity): Decision Tree tetap tertinggi (±93,0%).
+(1.209 baris, 5-fold per siklus pity): Decision Tree tetap tertinggi (±93,1%).
 
 **Kenapa KNN turun saat dilatih dengan data asli saja?**
-Nilai k = 101 tetangga terlalu besar untuk data latih ±950 baris yang hanya berisi ±130 kelas
+Nilai k = 101 tetangga terlalu besar untuk data latih ±970 baris yang hanya berisi ±130 kelas
 positif, sehingga tetangga terdekat hampir selalu kelas mayoritas. Ini menunjukkan hyperparameter
 harus disesuaikan dengan ukuran data.
 
