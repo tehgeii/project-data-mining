@@ -10,6 +10,7 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 | `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 17 slide + catatan pembicara (±20 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
 | `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 22 slide + catatan pembicara (±30 menit) |
+| `sumber/` | (tidak dikumpulkan) | Kode pembuat keempat file di atas. Lihat `sumber/README.md` |
 
 > Proposal UTS sudah memuat "Hasil Awal (Prototipe)" karena aplikasinya sudah jadi.
 > Sebelum dikumpulkan, baca sekali lagi dan sesuaikan kalimat yang kurang pas.

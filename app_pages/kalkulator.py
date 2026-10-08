@@ -40,10 +40,10 @@ with c1:
 with c2:
     guaranteed = st.toggle("Guaranteed rate-up", bool(default_guar), key=f"calc_guar_{key}_{source}")
 
-with st.expander("Hitung jumlah pull dari Polychrome / Master Tape"):
+with st.expander("Hitung jumlah pull dari Polychrome / Encrypted Master Tape"):
     p1, p2 = st.columns(2)
     poly = p1.number_input("Polychrome", 0, 10_000_000, 0, step=160)
-    tapes = p2.number_input("Master Tape / Encrypted", 0, 100_000, 0)
+    tapes = p2.number_input("Encrypted Master Tape", 0, 100_000, 0)
     from_resources = P.polychrome_to_pulls(poly, tapes)
     st.write(f"Setara **{from_resources} pull**.")
 

@@ -83,6 +83,18 @@ def styled(df: pd.DataFrame):
     return styler
 
 
+def cv_table(cv: dict) -> pd.DataFrame:
+    """Tabel "rata-rata ± standar deviasi" dari hasil cross-validation."""
+    rows = []
+    for name, s in cv["scores"].items():
+        row = {"Model": name}
+        for m, (label, _) in METRICS.items():
+            if m in s and s[m]["mean"] is not None:
+                row[label] = f"{s[m]['mean']:.4f} ± {s[m]['std']:.4f}"
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 tab_test, tab_cv, tab_real, tab_curve, tab_cm, tab_imp = st.tabs(
     ["Hasil test", "Cross-validation", "Latih di data asli", "Kurva peluang", "Confusion matrix", "Fitur"]
 )
@@ -130,27 +142,8 @@ with tab_test:
 
 with tab_cv:
     cv = task["cross_validation"]
-    rows = []
-    for name, s in cv["scores"].items():
-        row = {"Model": name}
-        for m, (label, _) in METRICS.items():
-            if m in s and s[m]["mean"] is not None:
-                row[label] = f"{s[m]['mean']:.4f} ± {s[m]['std']:.4f}"
-        rows.append(row)
     st.write(f"GroupKFold {cv['n_splits']}-fold (dibagi per akun), rata-rata ± standar deviasi:")
-    st.dataframe(pd.DataFrame(rows), hide_index=True)
-
-
-def cv_table(cv: dict) -> pd.DataFrame:
-    rows = []
-    for name, s in cv["scores"].items():
-        row = {"Model": name}
-        for m, (label, _) in METRICS.items():
-            if m in s and s[m]["mean"] is not None:
-                row[label] = f"{s[m]['mean']:.4f} ± {s[m]['std']:.4f}"
-        rows.append(row)
-    return pd.DataFrame(rows)
-
+    st.dataframe(cv_table(cv), hide_index=True)
 
 with tab_real:
     rcv = task.get("real_cv")

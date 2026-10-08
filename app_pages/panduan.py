@@ -3,7 +3,9 @@ from pathlib import Path
 import streamlit as st
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "get_zzz_url.ps1"
-RAW_URL = "https://raw.githubusercontent.com/tehgeii/project-data-mining/main/scripts/get_zzz_url.ps1"
+# Branch tempat aplikasi ini di-deploy. Ganti kalau branch-nya diganti (mis. ke "main").
+BRANCH = "claude/cool-mayer-84l96p"
+RAW_URL = f"https://raw.githubusercontent.com/tehgeii/project-data-mining/{BRANCH}/scripts/get_zzz_url.ps1"
 
 st.title("📖 Panduan & FAQ")
 
@@ -36,7 +38,7 @@ if script_text:
         st.code(script_text, language="powershell")
 
 with st.expander("Cara cepat satu baris (tanpa download)"):
-    st.write("Hanya jalan kalau repository GitHub proyek ini bersifat publik.")
+    st.write("Jalankan di PowerShell. Perintah ini mengunduh script yang sama dari GitHub proyek ini lalu langsung menjalankannya.")
     st.code(f"iwr -useb {RAW_URL} | iex", language="powershell")
 
 st.header("Pemain HP / tablet")
