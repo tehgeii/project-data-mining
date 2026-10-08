@@ -27,7 +27,7 @@ Dibantu oleh Claude (Anthropic) dalam penulisan kode.
 | Halaman | Isi |
 |---|---|
 | 📥 Import Data | 3 cara: **URL dari PowerShell** (PC), **upload file UIGF** (HP/PC), **input manual** (HP). Ada juga **data contoh** untuk yang tidak punya game. |
-| 🎲 Kalkulator Peluang | Peluang dapat S / S rate-up dalam N pull (Markov Chain, hasil eksak), konversi Polychrome, dan prediksi dari 4 model ML. |
+| 🎲 Kalkulator Peluang | Peluang dapat S / S rate-up dalam N pull (Markov Chain, hasil eksak), konversi Polychrome, dan prediksi dari 6 model ML. |
 | 📊 Statistik Riwayat | Pity tiap S, rata-rata pity, menang/kalah 50/50, pity sekarang. |
 | 🤖 Perbandingan Algoritma | Tabel Accuracy, Balanced Accuracy, Precision, Recall, F1, ROC-AUC, Log Loss, Brier; cross-validation; kurva peluang; confusion matrix; feature importance. |
 | 📖 Panduan & FAQ | Cara menjalankan script PowerShell dan menjawab pertanyaan umum. |
@@ -48,9 +48,9 @@ python scripts/train_models.py          # latih ulang model (±1-2 menit)
 
 ## Deploy ke Streamlit Community Cloud (gratis, bisa dibuka di HP)
 
-1. Pastikan kode sudah ada di GitHub (branch `main`).
+1. Pastikan kode sudah ada di GitHub (saat ini branch `claude/cool-mayer-84l96p`).
 2. Buka <https://share.streamlit.io>, login dengan akun GitHub.
-3. **Create app** → pilih repository ini, branch `main`, main file `streamlit_app.py`.
+3. **Create app** → pilih repository ini, branch `claude/cool-mayer-84l96p`, main file `streamlit_app.py`.
 4. Di **Advanced settings**, pilih Python **3.12**.
 5. **Deploy**. Link `https://<nama-app>.streamlit.app` bisa dibuka dari HP, tablet, maupun laptop.
 
@@ -78,8 +78,8 @@ scripts/
   train_models.py         # latih & evaluasi semua model -> models/
 models/                   # model terlatih + report.json (dibaca aplikasi)
 data/real/                # tempat dataset asli anonim (.csv)
-tests/                    # 86+ test otomatis (pytest)
-docs/                     # bahan laporan
+tests/                    # 87 test otomatis (pytest)
+docs/                     # bahan laporan; docs/tugas = file UTS/UAS + kodenya (sumber/)
 ```
 
 ## Metodologi singkat

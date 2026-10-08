@@ -43,7 +43,8 @@ c3.metric(
     delta=f"{P.expected_pulls_per_s(banner) - avg_pity:+.1f} vs rata-rata teori" if avg_pity is not None else None,
     help="Hijau = lebih hoki dari rata-rata teori (butuh lebih sedikit pull).",
 )
-win_label = "Menang 50/50" if key == "agent" else "Menang 75/25"
+coin_label = "50/50" if key == "agent" else "75/25"
+win_label = f"Menang {coin_label}"
 c4.metric(win_label, f"{int(coin['featured'].sum())}/{len(coin)}" if len(coin) else "-",
           help=f"Peluang teori {pct(banner.featured_rate, 0)}.")
 
@@ -61,7 +62,7 @@ if len(s_rows):
                          customdata=s_rows["name"], hovertemplate="%{customdata}<br>pity %{y}<extra></extra>"))
     fig.add_hline(y=P.expected_pulls_per_s(banner), line_dash="dash", line_color="#C9D1D9", annotation_text="rata-rata teori", annotation_position="bottom left")
     fig.add_hline(y=banner.soft_pity_start, line_dash="dot", line_color="#F5A623", annotation_text="soft pity", annotation_position="top left")
-    fig.update_layout(title="Pity setiap S (hijau = rate-up, merah = kalah 50/50)", xaxis_title="S ke-",
+    fig.update_layout(title=f"Pity setiap S (hijau = rate-up, merah = kalah {coin_label})", xaxis_title="S ke-",
                       yaxis_title="Pity", xaxis_dtick=1, height=340, margin=dict(l=10, r=10, t=50, b=10), yaxis_range=[0, banner.hard_pity])
     st.plotly_chart(fig, config={"displayModeBar": False})
     table = s_history(data).rename(
