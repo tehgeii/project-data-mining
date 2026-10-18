@@ -27,7 +27,7 @@ Chain sebagai acuan teori.
 | 📥 Import Data | 3 cara: **URL dari PowerShell** (PC), **upload file UIGF** (HP/PC), **input manual** (HP). Ada juga **data contoh** untuk yang tidak punya game. |
 | 🎲 Kalkulator Peluang | Peluang dapat S / S rate-up dalam N pull (Markov Chain, dihitung tanpa simulasi), konversi Polychrome, dan prediksi dari 6 model ML. |
 | 📊 Statistik Riwayat | Pity tiap S, rata-rata pity, menang/kalah 50/50, pity sekarang. |
-| 🤖 Perbandingan Algoritma | Tabel Accuracy, Balanced Accuracy, Precision, Recall, F1, ROC-AUC, Log Loss, Brier; cross-validation; kurva peluang; confusion matrix; feature importance. |
+| 🤖 Perbandingan Algoritma | Tabel Accuracy, Balanced Accuracy, Precision, Recall, F1, ROC-AUC, Log Loss, Brier; cross-validation dengan uji signifikansi; hyperparameter hasil grid search; latih–uji di data asli; pola soft pity di data asli; kurva peluang; confusion matrix; feature importance. |
 | 📖 Panduan & FAQ | Cara menjalankan script PowerShell dan menjawab pertanyaan umum. |
 
 ## Menjalankan di laptop
@@ -76,7 +76,7 @@ scripts/
   train_models.py         # latih & evaluasi semua model -> models/
 models/                   # model terlatih + report.json (dibaca aplikasi)
 data/real/                # tempat dataset asli anonim (.csv)
-tests/                    # 87 test otomatis (pytest)
+tests/                    # 99 test otomatis (pytest)
 docs/                     # bahan laporan; docs/tugas = file UTS/UAS + kodenya (sumber/)
 ```
 
@@ -93,9 +93,13 @@ docs/                     # bahan laporan; docs/tugas = file UTS/UAS + kodenya (
 - **Data:** simulasi Monte Carlo 400 akun dari parameter resmi, ditambah data
   asli pemain (anonim) untuk pengujian. Pembagian train/test **per akun**
   (GroupShuffleSplit & GroupKFold) supaya tidak ada kebocoran data.
+- **Grid search:** hyperparameter setiap algoritma dipilih dengan `GridSearchCV`
+  pada 100 akun simulasi tambahan yang tidak dipakai untuk evaluasi.
+- **Uji signifikansi:** selisih akurasi antar-model diuji dengan uji t
+  berpasangan terkoreksi (Nadeau & Bengio, 2003) pada hasil setiap fold.
 - **Eksperimen kedua:** keenam algoritma juga dilatih dan diuji hanya dengan
-  data asli (1.209 baris, GroupKFold 5-fold per siklus pity), tab
-  "Latih di data asli" di halaman Perbandingan Algoritma.
+  data asli (1.209 baris, GroupKFold 5-fold per siklus pity, grid search diulang
+  di dalam setiap fold), tab "Latih di data asli" di halaman Perbandingan Algoritma.
 - **Pembanding:** baseline "selalu tebak tidak S" (membuktikan jebakan akurasi)
   dan Markov Chain (peluang teoretis).
 

@@ -105,7 +105,13 @@ def test_load_real_dir(tmp_path):
     assert len(M.build_features(real, horizon=10)) > 0
 
 
-def test_training_script_end_to_end(tmp_path):
+SMALL_GRIDS = {
+    "KNN": {"kneighborsclassifier__n_neighbors": [101, 15]},
+    "Decision Tree": {"max_depth": [6, 3], "min_samples_leaf": [50]},
+}
+
+
+def test_training_script_end_to_end(tmp_path, monkeypatch):
     import importlib.util
     from pathlib import Path
 
@@ -117,12 +123,19 @@ def test_training_script_end_to_end(tmp_path):
     real_dir.mkdir()
     (real_dir / "demo.json").write_bytes(to_uigf(to_dataframe(demo_items())))
     out = tmp_path / "out"
-    mod.main(["--accounts", "12", "--cv", "2", "--real-dir", str(real_dir), "--out", str(out)])
+    monkeypatch.setattr(M, "PARAM_GRIDS", SMALL_GRIDS)  # grid kecil supaya test cepat
+    mod.main(["--accounts", "12", "--cv", "2", "--tune-accounts", "8", "--real-dir", str(real_dir), "--out", str(out)])
     report = json.loads((out / "report.json").read_text())
     assert set(report["tasks"]) == set(M.TASKS)
     assert report["tasks"]["next_10"]["real"] is not None
     real_cv = report["tasks"]["next_10"]["real_cv"]
     assert real_cv is not None and real_cv["rows"] > 0 and real_cv["groups"] >= 5
+    assert set(real_cv["params"]) == set(SMALL_GRIDS) and "manual" in real_cv
+    assert real_cv["significance"]["best"] in M.ML_MODELS
+    task = report["tasks"]["next_10"]
+    assert set(task["tuning"]["models"]) == set(SMALL_GRIDS)
+    assert task["cross_validation"]["significance"]["best"] in M.ML_MODELS
+    assert report["softpity"]["ranges"] and report["softpity"]["tree_root"]["feature"] in M.FEATURES
     assert (out / "models.joblib").exists()
 
 
@@ -133,3 +146,78 @@ def test_cycle_groups_split_on_pity_reset():
     )
     g = M.add_cycle_groups(frame)["cycle_group"].tolist()
     assert g[0] == g[1] == g[2] and g[3] == g[4] and len(set(g)) == 3
+
+
+def test_make_models_applies_chosen_params():
+    models = M.make_models(params={"KNN": {"kneighborsclassifier__n_neighbors": 7}, "Decision Tree": {"max_depth": 3}})
+    assert models["KNN"][-1].n_neighbors == 7 and models["Decision Tree"].max_depth == 3
+    assert M.make_models()["KNN"][-1].n_neighbors == 101  # bawaan tidak berubah
+
+
+def test_grid_order_starts_with_current_settings():
+    defaults = M.make_models()
+    for name, grid in M.PARAM_GRIDS.items():
+        for key, values in grid.items():
+            assert defaults[name].get_params()[key] == values[0], (name, key)
+
+
+def test_tune_hyperparameters_picks_from_grid(sim, monkeypatch):
+    monkeypatch.setattr(M, "PARAM_GRIDS", SMALL_GRIDS)
+    df = M.build_features(sim, horizon=10)
+    tuned = M.tune_hyperparameters(df, horizon=10, n_splits=3)
+    assert set(tuned) == set(SMALL_GRIDS)
+    for name, t in tuned.items():
+        for key, value in t["best_params"].items():
+            assert value in SMALL_GRIDS[name][key]
+        assert t["best_score"] >= t["manual_score"] - 1e-12
+
+
+def test_nested_cv_records_params_per_fold(sim, monkeypatch):
+    monkeypatch.setattr(M, "PARAM_GRIDS", SMALL_GRIDS)
+    df = M.build_features(sim, horizon=10)
+    cv = M.cross_validate(df, n_splits=3, horizon=10, tune=True, tune_splits=2)
+    assert all(len(v) == 3 for v in cv["params"].values())
+    assert all(len(v) == 3 for v in cv["folds"].values()) and 0 < cv["test_train_ratio"] < 1
+
+
+def test_corrected_ttest():
+    assert M.corrected_ttest([0.9, 0.8, 0.7], [0.9, 0.8, 0.7], 0.25) == (0.0, 1.0)
+    t, p = M.corrected_ttest([0.95, 0.96, 0.94, 0.95, 0.96], [0.80, 0.81, 0.79, 0.80, 0.82], 0.25)
+    assert t > 0 and p < 0.01
+    # rumus Nadeau & Bengio: t = mean(d) / sqrt((1/k + ratio) * var(d))
+    a, b = np.array([0.93, 0.90, 0.95, 0.91, 0.94]), np.array([0.92, 0.91, 0.93, 0.90, 0.92])
+    d = a - b
+    expected = d.mean() / np.sqrt((1 / 5 + 0.25) * d.var(ddof=1))
+    assert M.corrected_ttest(a, b, 0.25)[0] == pytest.approx(expected)
+
+
+def test_significance_compares_with_best_ml_model():
+    folds = {name: [0.80, 0.81, 0.79] for name in [M.BASELINE_DUMMY, M.BASELINE_MARKOV, *M.ML_MODELS]}
+    folds["XGBoost"] = [0.90, 0.91, 0.89]
+    sig = M.significance({"folds": folds, "test_train_ratio": 0.25})
+    assert sig["best"] == "XGBoost" and "XGBoost" not in sig["rows"]
+    assert sig["tied"] == ["XGBoost"]
+    assert all(0 <= r["p"] <= 1 and r["diff"] > 0 for r in sig["rows"].values())
+
+
+def test_significance_reports_ties():
+    folds = {name: [0.98, 0.99, 0.97] for name in [M.BASELINE_DUMMY, M.BASELINE_MARKOV, *M.ML_MODELS]}
+    sig = M.significance({"folds": folds, "test_train_ratio": 0.25})
+    assert sig["tied"] == M.ML_MODELS
+    assert all(r["p"] == 1.0 and not r["significant"] for r in sig["rows"].values())
+
+
+def test_softpity_table_covers_every_pull(sim):
+    rows = M.softpity_table(sim)
+    assert sum(r["pulls"] for r in rows) == len(M.build_features(sim, horizon=1))
+    assert all(0 <= r["rate"] <= 1 and 0 < r["model"] <= 1 for r in rows)
+
+
+def test_tree_root_split_translates_pity_ratio():
+    X = pd.DataFrame({"pity": range(90), "pity_ratio": [i / 90 for i in range(90)], "guaranteed": 0, "is_wengine": 0})
+    y = (X["pity"] >= 70).astype(int)
+    tree = M.DecisionTreeClassifier(max_depth=1).fit(X[M.FEATURES], y)
+    root = M.tree_root_split(tree)
+    assert root["feature"] in ("pity", "pity_ratio")
+    if root["feature"] == "pity_ratio":
+        assert root["agent_pity"] == pytest.approx(root["threshold"] * 90)

@@ -1,6 +1,7 @@
 // node slides.js uts|uas <out.pptx>
 const pptxgen = require("pptxgenjs");
 const fs = require("fs");
+const X = require("./rep"); // angka hasil pelatihan dari models/report.json
 const MODE = process.argv[2], OUT = process.argv[3];
 const FIG = process.env.FIG;
 const pres = new pptxgen();
@@ -68,8 +69,19 @@ function chartBars(s, names, series, x, y, w, h, o = {}) {
 }
 
 const NAMES = ["Baseline", "Markov (teori)", "Naive Bayes", "KNN", "Log. Regression", "Decision Tree", "Random Forest", "XGBoost"];
-const ACC_SIM = [83.4, 91.1, 85.7, 91.1, 88.9, 91.1, 91.1, 91.1];
-const ACC_REAL = [86.6, 93.5, 87.5, 93.5, 91.1, 93.3, 93.3, 93.4];
+const SHORT = { [X.BASELINE]: "Baseline", [X.MARKOV]: "Markov (teori)" };
+const short = (n) => SHORT[n] ?? n;
+const cvA = X.A.cross_validation.scores, cvB = X.B.cross_validation.scores, rB = X.B.real, rcv = X.B.real_cv;
+const sigS = X.B.cross_validation.significance, sigR = rcv.significance;
+const pc = (v, d = 1) => Math.round(v * 10 ** (d + 2)) / 10 ** d; // 0.91084 -> 91.1
+const accOf = (sc) => X.ALL.map((n) => pc(X.val(sc, n, "accuracy")));
+const ACC_SIM = accOf(cvB);
+const ACC_REAL = accOf(rB);
+const ACC_REAL_CV = accOf(rcv.scores);
+const P = (sc, n, d = 1) => X.pct(X.val(sc, n, "accuracy"), d); // "93,1%"
+// baris tabel slide: nama pendek + angka 4 desimal
+const srows = (cols) => X.ALL.map((n) => [short(n), ...cols.map(([sc, key]) => X.num(X.val(sc, n, key)))]);
+const kReal = [...new Set(rcv.params.KNN.map((q) => q.kneighborsclassifier__n_neighbors))].sort((a, b) => a - b);
 const TEAM = [["NIM", "Nama", "Peran"],
   ["A11.2024.16004", "Syafiq Yahya", "Ketua kelompok, presentasi hasil"],
   ["A11.2024.15851", "Dafi Hauzan A.H", "Pengembang aplikasi, pengumpulan & pengujian data"],
@@ -161,14 +173,15 @@ function algoritma() {
   const s = base("Enam algoritma klasifikasi yang dibandingkan", "Landasan teori");
   const a = [
     ["Naive Bayes", "Probabilistik, asumsi fitur saling bebas & berdistribusi normal.", C.purple],
-    ["KNN", "Menebak dari 101 data latih terdekat (fitur dinormalisasi).", C.pink],
+    ["KNN", "Menebak dari k data latih terdekat (fitur dinormalisasi).", C.pink],
     ["Logistic Regression", "Kurva sigmoid dari kombinasi linear fitur.", C.blue],
-    ["Decision Tree", "Aturan jika–maka yang mudah dibaca (max depth 6).", C.acc],
+    ["Decision Tree", "Aturan jika–maka yang mudah dibaca manusia.", C.acc],
     ["Random Forest", "150 pohon acak, hasil dirata-rata (bagging).", C.red],
     ["XGBoost", "300 pohon berurutan memperbaiki kesalahan (boosting).", C.green],
   ];
-  a.forEach(([t, b, c], k) => card(s, M + (k % 3) * 4.1, 1.8 + Math.floor(k / 3) * 2.45, 3.9, 2.25, t, b, c, { tsize: 20, bsize: 15 }));
-  s.addNotes("Algoritma (±2 menit). Jelaskan singkat keenam algoritma. Naive Bayes, KNN, dan Decision Tree adalah materi kuliah. Logistic Regression sebagai model linear sederhana. Random Forest dan XGBoost adalah ensemble pohon. Ditambah dua pembanding: baseline yang selalu menebak tidak dapat S, dan Markov Chain sebagai acuan teori.");
+  a.forEach(([t, b, c], k) => card(s, M + (k % 3) * 4.1, 1.7 + Math.floor(k / 3) * 2.2, 3.9, 2.0, t, b, c, { tsize: 20, bsize: 15 }));
+  T(s, "Hyperparameter (k, var_smoothing, C, kedalaman pohon, learning rate) dipilih dengan grid search, bukan ditebak.", { x: M, y: 6.2, w: 12.1, h: 0.5, fontSize: 15, color: C.mut });
+  s.addNotes("Algoritma (±2 menit). Jelaskan singkat keenam algoritma. Naive Bayes, KNN, dan Decision Tree adalah materi kuliah. Logistic Regression sebagai model linear sederhana. Random Forest dan XGBoost adalah ensemble pohon. Ditambah dua pembanding: baseline yang selalu menebak tidak dapat S, dan Markov Chain sebagai acuan teori. Tekankan bahwa pengaturan setiap algoritma, misalnya jumlah tetangga k pada KNN, tidak ditebak, tetapi dipilih dengan grid search.");
 }
 function metrik() {
   const s = base("Evaluasi: akurasi saja tidak cukup", "Landasan teori");
@@ -215,12 +228,13 @@ function fitur() {
 function skenario() {
   const s = base("Skenario evaluasi", "Metode");
   const it = [["Split per akun", "Pull dari satu akun tidak boleh ada di data latih dan uji sekaligus.", C.acc],
-    ["5-fold GroupKFold", "Rata-rata ± simpangan baku dari 5 percobaan.", C.blue],
+    ["Grid search", `Hyperparameter dipilih di ${X.B.tuning.accounts} akun simulasi terpisah (tidak dipakai evaluasi).`, C.pink],
+    ["5-fold GroupKFold", "Rata-rata ± simpangan baku, lalu uji t berpasangan terkoreksi.", C.blue],
     ["Uji data asli", "Model diuji di 2 akun asli yang tidak pernah dilihat saat latih.", C.green],
-    ["Latih di data asli", "Eksperimen kedua: latih + uji hanya data asli, 5-fold per siklus pity.", C.purple]];
-  it.forEach(([t, b, c], k) => card(s, M + k * 3.07, 2.0, 2.87, 3.2, t, b, c, { icon: String(k + 1), bsize: 15 }));
+    ["Latih di data asli", "Latih + uji hanya data asli, 5-fold per siklus pity, nested grid search.", C.purple]];
+  it.forEach(([t, b, c], k) => card(s, M + k * 2.46, 1.9, 2.3, 3.4, t, b, c, { icon: String(k + 1), bsize: 14, tsize: 17 }));
   T(s, "Pembanding: Baseline (selalu \"tidak S\") dan Markov Chain (acuan teori).", { x: M, y: 5.5, w: 12, h: 0.5, fontSize: 16, color: C.mut });
-  s.addNotes("Skenario evaluasi (±1 menit). Pembagian data per akun mencegah kebocoran, karena pull yang berurutan saling berkaitan. Cross-validation lima fold untuk hasil yang stabil, lalu uji akhir di data asli. Poin keempat adalah eksperimen kedua: semua algoritma dilatih dan diuji hanya dengan data asli, 1.209 baris, dibagi per siklus pity menjadi 5 bagian, supaya hasil tidak bergantung pada data simulasi. Kami tidak memakai oversampling seperti SMOTE, karena yang dicari adalah angka peluang yang tepat; ketidakseimbangan ditangani lewat pilihan metrik.");
+  s.addNotes("Skenario evaluasi (±1 menit). Pembagian data per akun mencegah kebocoran, karena pull yang berurutan saling berkaitan. Cross-validation lima fold untuk hasil yang stabil, lalu uji akhir di data asli. Hyperparameter setiap algoritma dipilih dengan grid search memakai 100 akun simulasi tambahan yang tidak dipakai untuk evaluasi, jadi tidak ada kebocoran. Perbedaan antar-model diuji dengan uji t berpasangan terkoreksi, supaya kita tahu selisihnya nyata atau hanya kebetulan. Poin kelima adalah eksperimen kedua: semua algoritma dilatih dan diuji hanya dengan data asli, 1.209 baris, dibagi per siklus pity menjadi 5 bagian, dan grid search diulang di dalam setiap bagian. Kami tidak memakai oversampling seperti SMOTE, karena yang dicari adalah angka peluang yang tepat; ketidakseimbangan ditangani lewat pilihan metrik.");
 }
 function screenshot(title, eyebrow, file, points, notes) {
   const s = base(title, eyebrow);
@@ -256,7 +270,7 @@ function uts() {
   { const s = base("Hasil awal prototipe (tugas B)", "Progres");
     chartBars(s, NAMES, [{ name: "Simulasi (5-fold CV)", values: ACC_SIM, color: C.blue }, { name: "Data asli (2 akun)", values: ACC_REAL, color: C.acc }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%)" });
     card(s, 9.3, 1.8, 3.4, 4.8, "Temuan awal", "Prototipe sudah jalan; pity akun asli sama dengan di game. Model pohon & KNN ±91% (simulasi) dan ±93% (data asli). Data asli juga memperlihatkan lonjakan S Agent mulai pull ke-74, sesuai estimasi soft pity.", C.green, { bsize: 15 });
-    s.addNotes("Hasil awal (±2 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Validasi: saat dicek, pity akun asli 70 dari 90 dan 46 dari 80 sama persis dengan di game. Hasil awal tugas B: model pohon dan KNN sekitar 91 persen di simulasi dan 93 persen di data asli, Logistic Regression dan Naive Bayes lebih rendah. Eksperimen latih dan uji dengan data asli saja, 1.209 baris, juga sudah dilakukan: Decision Tree tetap tertinggi sekitar 93 persen. Analisis awal data asli memperlihatkan laju S Agent hampir nol sampai pull ke-73 lalu melonjak mulai pull ke-74, sesuai estimasi soft pity. Hasil lengkap akan dibahas di laporan akhir."); }
+    s.addNotes("Hasil awal (±2 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Validasi: saat dicek, pity akun asli 70 dari 90 dan 46 dari 80 sama persis dengan di game. Hasil awal tugas B: model pohon dan KNN sekitar 91 persen di simulasi dan 93 persen di data asli, Logistic Regression dan Naive Bayes lebih rendah. Eksperimen latih dan uji dengan data asli saja, 1.209 baris, juga sudah dilakukan: Decision Tree tetap tertinggi sekitar 93 persen. Uji coba grid search membuat Naive Bayes dan KNN membaik, dan uji signifikansi awal menunjukkan selisih antaralgoritma di data asli yang masih sedikit belum bermakna. Analisis awal data asli memperlihatkan laju S Agent hampir nol sampai pull ke-73 lalu melonjak mulai pull ke-74, sesuai estimasi soft pity. Hasil lengkap akan dibahas di laporan akhir."); }
   { const s = base("Jadwal kegiatan", "Rencana");
     table(s, [["Kegiatan", "M1", "M2", "M3", "M4"],
       ["Studi literatur & aturan gacha", "✓", "", "", ""], ["Pengumpulan data & simulasi", "✓", "✓", "", ""],
@@ -280,34 +294,44 @@ function uas() {
   { const s = base("Validasi dengan akun asli", "Hasil");
     stat(s, M, 2.0, 3.8, "70 / 90", "pity Agent dihitung aplikasi = di game");
     stat(s, 4.75, 2.0, 3.8, "46 / 80", "pity W-Engine + guaranteed = di game", C.blue);
-    stat(s, 8.9, 2.0, 3.8, "87 / 87", "test otomatis lolos (pytest + GitHub Actions)", C.green);
+    stat(s, 8.9, 2.0, 3.8, "99 / 99", "test otomatis lolos (pytest + GitHub Actions)", C.green);
     T(s, "Pengambilan data, perhitungan pity, dan deteksi 50/50 terbukti benar dengan data game sungguhan (versi Steam).", { x: M, y: 4.6, w: 12, h: 0.9, fontSize: 18, color: C.mut, valign: "top" });
-    s.addNotes("Validasi (±1 menit). Saat dicek, angka pity yang dihitung aplikasi untuk akun asli sama persis dengan yang tampil di game. Selain itu 87 test otomatis memastikan perhitungan tidak salah."); }
+    s.addNotes("Validasi (±1 menit). Saat dicek, angka pity yang dihitung aplikasi untuk akun asli sama persis dengan yang tampil di game. Selain itu 99 test otomatis memastikan perhitungan tidak salah."); }
   { const s = base("Tugas A: jebakan akurasi", "Hasil", C.bg2);
     stat(s, M, 1.9, 4.5, "98,3%", "akurasi model yang SELALU menebak \"tidak dapat S\"");
-    table(s, [["Model", "Accuracy", "Bal. Acc.", "ROC-AUC"],
-      ["Baseline", "0,9828", "0,5000", "0,5000"], ["Markov (teori)", "0,9830", "0,5184", "0,7890"], ["Naive Bayes", "0,9829", "0,5007", "0,7563"],
-      ["KNN", "0,9829", "0,5150", "0,7728"], ["Logistic Regression", "0,9828", "0,5000", "0,7578"], ["Decision Tree", "0,9830", "0,5136", "0,7889"],
-      ["Random Forest", "0,9830", "0,5151", "0,7877"], ["XGBoost", "0,9829", "0,5162", "0,7862"]], 5.6, 1.8, 7.1, [2.9, 1.4, 1.4, 1.4], { size: 13, rowH: 0.48 });
+    table(s, [["Model", "Accuracy", "Bal. Acc.", "ROC-AUC"], ...srows([[cvA, "accuracy"], [cvA, "balanced_accuracy"], [cvA, "roc_auc"]])], 5.6, 1.8, 7.1, [2.9, 1.4, 1.4, 1.4], { size: 13, rowH: 0.48 });
     T(s, "Semua model ±98,3% → akurasi tidak bisa membedakan model. Perbedaan baru terlihat di ROC-AUC & Log Loss.", { x: M, y: 4.2, w: 4.6, h: 2.0, fontSize: 16, color: C.mut, valign: "top" });
     s.addNotes("Tugas A (±1,5 menit). Ini temuan penting. Semua model, bahkan tebakan bodoh, akurasinya 98 persen. Jadi akurasi tidak bisa dipakai sendirian di data tidak seimbang. Itulah alasan tugas B dijadikan tugas utama."); }
   { const s = base("Tugas B: akurasi 6 algoritma", "Hasil");
     chartBars(s, NAMES, [{ name: "Simulasi (5-fold CV)", values: ACC_SIM, color: C.blue }, { name: "Data asli (2 akun)", values: ACC_REAL, color: C.acc }], M, 1.7, 12.1, 4.55, { min: 80, max: 96, title: "Accuracy (%) — dapat S dalam 10 pull" });
     T(s, "Akurasi data asli lebih tinggi karena kelas positifnya lebih sedikit (13,4% vs 16,6%), sehingga baseline ikut naik (86,6% vs 83,4%). Keunggulan di atas baseline sama-sama ±7 poin.", { x: M, y: 6.3, w: 12.1, h: 0.6, fontSize: 14, color: C.mut, valign: "top" });
-    s.addNotes("Tugas B (±2 menit). Bacakan grafik. Decision Tree, Random Forest, XGBoost, dan KNN sekitar 91 persen di simulasi dan 93 persen di data asli, hampir sama dengan acuan teori Markov; selisih di antara keempatnya sangat kecil sehingga dianggap setara. Logistic Regression 88,9 persen, Naive Bayes 85,7 persen, baseline 83,4 persen. Kalau ditanya kenapa data asli lebih tinggi: kelas positifnya lebih sedikit, jadi baseline-nya juga lebih tinggi; keunggulan di atas baseline sama-sama sekitar 7 poin."); }
+    s.addNotes("Tugas B (±2 menit). Bacakan grafik. Decision Tree, Random Forest, XGBoost, dan KNN sekitar 91 persen di simulasi dan 93 persen di data asli, hampir sama dengan acuan teori Markov; selisih di antara keempatnya sangat kecil dan tidak signifikan, sehingga setara. Logistic Regression 88,9 persen dan Naive Bayes 89,2 persen setelah grid search; menurut uji signifikansi keduanya nyata lebih rendah. Baseline 83,4 persen. Kalau ditanya kenapa data asli lebih tinggi: kelas positifnya lebih sedikit, jadi baseline-nya juga lebih tinggi; keunggulan di atas baseline sama-sama sekitar 7 poin."); }
   { const s = base("Tugas B: metrik lengkap (cross-validation)", "Hasil");
     table(s, [["Model", "Accuracy", "Bal. Acc.", "F1", "ROC-AUC", "Log Loss"],
-      ["Baseline", "0,8337", "0,5000", "0,0000", "0,5000", "2,6804"], ["Markov (teori)", "0,9108", "0,7601", "0,6658", "0,8110", "0,2811"],
-      ["Naive Bayes", "0,8572", "0,7569", "0,5855", "0,7810", "0,3844"], ["KNN", "0,9107", "0,7598", "0,6654", "0,8072", "0,2866"],
-      ["Logistic Regression", "0,8888", "0,6675", "0,5010", "0,7895", "0,3625"], ["Decision Tree", "0,9108", "0,7614", "0,6671", "0,8117", "0,2814"],
-      ["Random Forest", "0,9108", "0,7612", "0,6669", "0,8102", "0,2816"], ["XGBoost", "0,9108", "0,7604", "0,6661", "0,8098", "0,2816"]],
+      ...srows([[cvB, "accuracy"], [cvB, "balanced_accuracy"], [cvB, "f1"], [cvB, "roc_auc"], [cvB, "log_loss"]])],
       M, 1.8, 12.1, [3.6, 1.7, 1.7, 1.7, 1.7, 1.7], { size: 14, rowH: 0.52, hlRows: [4, 6, 7, 8] });
-    s.addNotes("Metrik lengkap (±1,5 menit). Baris kuning adalah empat algoritma terbaik. Decision Tree terbaik di balanced accuracy, F1, ROC-AUC, dan log loss, walau selisihnya kecil dengan Random Forest, XGBoost, dan KNN."); }
+    s.addNotes("Metrik lengkap (±1,5 menit). Baris kuning adalah empat algoritma terbaik. Decision Tree terbaik di balanced accuracy, ROC-AUC, dan log loss, KNN terbaik di F1, tetapi selisih keempatnya sangat kecil."); }
+  { const s = base("Grid search hyperparameter", "Hasil");
+    table(s, [["Algoritma", "Terpilih (tugas B)", "Acc. awal → terpilih"],
+      ...X.ML.map((n) => [n, X.params(X.B.tuning.models[n].best_params), `${X.num(X.B.tuning.models[n].manual_score)} → ${X.num(X.B.tuning.models[n].best_score)}`])],
+      M, 1.8, 8.4, [2.2, 4.0, 2.2], { size: 13, rowH: 0.62, hlRows: [1] });
+    card(s, 9.3, 1.8, 3.4, 2.3, "Naive Bayes naik", `${X.pct(X.B.tuning.models["Naive Bayes"].manual_score)} → ${X.pct(X.B.tuning.models["Naive Bayes"].best_score)} di data grid search. Yang lain berubah ≤0,1 poin.`, C.purple, { bsize: 14 });
+    card(s, 9.3, 4.3, 3.4, 2.4, "Tanpa kebocoran", `Dipilih di ${X.B.tuning.accounts} akun simulasi terpisah (GroupKFold 4-fold), bukan di data evaluasi.`, C.green, { bsize: 14 });
+    s.addNotes(`Grid search (±1,5 menit). Setiap algoritma diberi beberapa pilihan pengaturan, lalu dipilih yang akurasinya paling tinggi di ${X.B.tuning.accounts} akun simulasi tambahan yang tidak dipakai untuk evaluasi. Naive Bayes paling terbantu, naik dari ${X.pct(X.B.tuning.models["Naive Bayes"].manual_score)} menjadi ${X.pct(X.B.tuning.models["Naive Bayes"].best_score)}. Algoritma lain hampir tidak berubah, artinya pengaturan awalnya sudah cocok untuk data simulasi yang besar. Pengaturan terpilih inilah yang dipakai di aplikasi.`); }
   { const s = base("Latih & uji hanya dengan data asli", "Hasil · eksperimen kedua");
-    chartBars(s, NAMES, [{ name: "Accuracy (%)", values: [86.6, 93.7, 87.9, 87.4, 90.7, 93.1, 93.0, 92.2], color: C.green }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%) — 1.209 baris data asli, 5-fold per siklus pity" });
-    card(s, 9.3, 1.8, 3.4, 2.5, "Tetap teratas", "Decision Tree 93,1%, Random Forest 93,0%, XGBoost 92,2%. Selisihnya lebih kecil dari simpangan baku (±3%) → setara.", C.acc, { bsize: 14 });
-    card(s, 9.3, 4.5, 3.4, 2.2, "KNN turun", "k = 101 terlalu besar untuk ±970 baris latih → hampir selalu menebak mayoritas.", C.pink, { bsize: 14 });
-    s.addNotes("Eksperimen kedua (±2 menit). Untuk menjawab apakah model hanya bagus di data simulasi, kami melatih dan menguji keenam algoritma hanya dengan data asli: 1.209 baris dari 2 akun, sudah di atas syarat 500 sampai 1000 baris. Data dibagi per siklus pity menjadi 5 bagian. Hasilnya: Decision Tree 93,1 persen, Random Forest 93,0 persen, XGBoost 92,2 persen. Ketiga model pohon tetap teratas seperti di simulasi, dan karena selisihnya lebih kecil dari simpangan baku, ketiganya dianggap setara, hampir menyamai acuan teori Markov 93,7 persen. Logistic Regression 90,7 persen dan Naive Bayes 87,9 persen. KNN turun ke 87,4 persen karena nilai k = 101 terlalu besar untuk data sekecil ini, jadi KNN hampir selalu menebak kelas mayoritas. Pelajarannya: hyperparameter harus disesuaikan dengan ukuran data."); }
+    chartBars(s, NAMES, [{ name: "Accuracy (%)", values: ACC_REAL_CV, color: C.green }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: `Accuracy (%) — ${X.int(rcv.rows)} baris data asli, 5-fold per siklus pity` });
+    card(s, 9.3, 1.8, 3.4, 2.5, "Tetap teratas", `Decision Tree ${P(rcv.scores, "Decision Tree")}, Random Forest ${P(rcv.scores, "Random Forest")}, XGBoost ${P(rcv.scores, "XGBoost")}. Teori Markov ${P(rcv.scores, X.MARKOV)}.`, C.acc, { bsize: 14 });
+    card(s, 9.3, 4.5, 3.4, 2.2, "NB & KNN naik", `Naive Bayes ${P(rcv.manual, "Naive Bayes")} → ${P(rcv.scores, "Naive Bayes")}, KNN ${P(rcv.manual, "KNN")} → ${P(rcv.scores, "KNN")} (k = ${kReal[0]}–${kReal[kReal.length - 1]}, bukan 101).`, C.pink, { bsize: 14 });
+    s.addNotes(`Eksperimen kedua (±2 menit). Untuk menjawab apakah model hanya bagus di data simulasi, kami melatih dan menguji keenam algoritma hanya dengan data asli: ${X.int(rcv.rows)} baris dari 2 akun, sudah di atas syarat 500 sampai 1000 baris. Data dibagi per siklus pity menjadi 5 bagian, dan grid search diulang di dalam setiap bagian supaya data uji tidak ikut memilih pengaturan. Hasilnya: Decision Tree ${P(rcv.scores, "Decision Tree")}, Random Forest ${P(rcv.scores, "Random Forest")}, XGBoost ${P(rcv.scores, "XGBoost")}, hampir menyamai acuan teori Markov ${P(rcv.scores, X.MARKOV)}. Grid search paling membantu Naive Bayes dan KNN: dengan pengaturan awal keduanya hampir sama dengan baseline, tetapi setelah dipilih ulang naik menjadi ${P(rcv.scores, "Naive Bayes")} dan ${P(rcv.scores, "KNN")}. KNN memilih k antara ${kReal[0]} dan ${kReal[kReal.length - 1]}, karena k = 101 terlalu besar untuk data latih sekitar 970 baris. Pelajarannya: hyperparameter harus disesuaikan dengan ukuran data.`); }
+  { const s = base("Uji signifikansi: nyata atau kebetulan?", "Hasil");
+    const cell = (sig, n) => (n === sig.best ? ["acuan", "–"] : [X.pts(-sig.rows[n].diff), X.pnum(sig.rows[n].p)]);
+    table(s, [["Model", `vs ${sigS.best} (sim.)`, "p", `vs ${sigR.best} (asli)`, "p"],
+      ...X.ALL.map((n) => [short(n), ...cell(sigS, n), ...cell(sigR, n)])],
+      M, 1.8, 8.4, [2.6, 1.8, 1.2, 1.8, 1.0], { size: 13, rowH: 0.5 });
+    card(s, 9.3, 1.8, 3.4, 2.4, "Data simulasi", "Pohon & KNN setara. Naive Bayes & Logistic Regression NYATA lebih rendah (p < 0,001).", C.blue, { bsize: 14 });
+    card(s, 9.3, 4.4, 3.4, 2.3, "Data asli", `Hanya baseline yang nyata lebih rendah (p = ${X.pnum(sigR.rows[X.BASELINE].p)}). Selisih antaralgoritma belum signifikan → perlu lebih banyak akun.`, C.green, { bsize: 14 });
+    T(s, "Selisih dalam poin persen (negatif = lebih rendah dari acuan). Uji t berpasangan terkoreksi (Nadeau & Bengio, 2003), α = 0,05.", { x: M, y: 6.4, w: 8.4, h: 0.5, fontSize: 12, color: C.dim });
+    s.addNotes(`Uji signifikansi (±2 menit). Selisih akurasi yang kecil belum tentu nyata. Kami memakai uji t berpasangan terkoreksi dari Nadeau dan Bengio, yang cocok untuk hasil cross-validation karena data latih antarfold saling tumpang tindih. Di data simulasi, Decision Tree, Random Forest, dan KNN tidak berbeda nyata dari ${sigS.best}, sedangkan Naive Bayes dan Logistic Regression nyata lebih rendah, p kurang dari 0,001. Di data asli, hanya baseline yang nyata lebih rendah dari ${sigR.best}; selisih antaralgoritma, paling besar sekitar 2 poin, belum signifikan karena data asli baru 20 siklus pity. Jadi kami tidak mengklaim Decision Tree pasti yang terbaik di data asli; yang bisa dikatakan, model pohon konsisten di urutan atas.`); }
   { const s = base("Soft pity terlihat di data asli", "Hasil · pola soft pity");
     img(s, "fig_softpity.png", M, 1.7, 8.4, 4.1);
     card(s, 9.3, 1.8, 3.4, 2.4, "Agent", "Hampir 0% sampai pull ke-73, lalu 14% (pull 74–78) dan 38% (79–90). Hampir sama dengan model.", C.acc, { bsize: 14 });
@@ -327,11 +351,11 @@ function uas() {
   { const s = base("Kesimpulan & saran", "Penutup");
     [["Markov Chain", "Peluang dapat S dalam N pull dihitung langsung dari aturan banner dan dipakai di kalkulator.", C.acc],
       ["Soft pity dari data", "Lonjakan Agent mulai pull ke-74 (W-Engine ±65) terlihat di data asli dan ditemukan Decision Tree.", C.pink],
-      ["Algoritma terbaik", "Decision Tree, Random Forest, XGBoost setara terbaik: ±91% simulasi, ±93% data asli, juga saat dilatih di data asli saja.", C.blue],
+      ["Algoritma terbaik", "Pohon (DT, RF, XGBoost) & KNN setara terbaik: ±91% simulasi, ±93% data asli. NB & LR nyata lebih rendah. Di data asli saja, selisihnya belum signifikan.", C.blue],
       ["Akurasi saja menipu", "Data tidak seimbang butuh Balanced Acc., F1, ROC-AUC, Log Loss.", C.green],
     ].forEach(([t, b, c], k) => card(s, M + k * 3.07, 1.8, 2.87, 3.8, t, b, c, { icon: String(k + 1), bsize: 14, tsize: 17 }));
-    T(s, "Saran: tambah akun data asli, grid search hyperparameter (k pada KNN), uji signifikansi antar-model, perjelas soft pity W-Engine, perluas ke banner lain.", { x: M, y: 5.85, w: 12.1, h: 0.8, fontSize: 15, color: C.mut, valign: "top" });
-    s.addNotes("Kesimpulan (±1,5 menit). Bacakan empat kesimpulan dan saran pengembangan. Tekankan bahwa soft pity yang tidak diumumkan berhasil ditemukan dari data, dan model pohon tetap terbaik walaupun dilatih hanya dengan data asli. Sebutkan keterbatasan dengan jujur: data latih utama berasal dari simulasi, data asli baru dua akun, dan hyperparameter belum di-tuning."); }
+    T(s, "Saran: tambah akun data asli (≥5 akun) agar uji signifikansi lebih kuat, coba metrik lain untuk grid search, perjelas soft pity W-Engine, perluas ke banner lain.", { x: M, y: 5.85, w: 12.1, h: 0.8, fontSize: 15, color: C.mut, valign: "top" });
+    s.addNotes("Kesimpulan (±1,5 menit). Bacakan empat kesimpulan dan saran pengembangan. Tekankan bahwa soft pity yang tidak diumumkan berhasil ditemukan dari data, dan model pohon tetap terbaik walaupun dilatih hanya dengan data asli. Sebutkan keterbatasan dengan jujur: data latih utama berasal dari simulasi, dan data asli baru dua akun sehingga uji signifikansi di data asli belum cukup kuat untuk memastikan satu algoritma paling unggul."); }
   penutup("Ada pertanyaan? Silakan coba aplikasinya langsung:").addNotes("Penutup (±1 menit). Ucapkan terima kasih, ajak membuka aplikasi, buka sesi tanya jawab.");
 }
 

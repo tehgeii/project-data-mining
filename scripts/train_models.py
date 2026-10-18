@@ -7,6 +7,10 @@ Cara pakai (dari folder utama proyek):
 Hasil:
     models/models.joblib  -> model yang sudah dilatih
     models/report.json    -> semua metrik, kurva peluang, feature importance
+
+Hyperparameter dipilih dengan grid search pada akun simulasi TAMBAHAN (seed lain)
+yang tidak dipakai untuk evaluasi. Eksperimen data asli memakai nested
+cross-validation. Seluruh proses butuh sekitar 8-10 menit.
 """
 
 from __future__ import annotations
@@ -46,7 +50,7 @@ def _clean_nan(obj):
         return {k: _clean_nan(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_clean_nan(v) for v in obj]
-    if isinstance(obj, float) and np.isnan(obj):
+    if isinstance(obj, float) and (np.isnan(obj) or np.isinf(obj)):
         return None
     return obj
 
@@ -56,6 +60,7 @@ def main(argv: list[str] | None = None) -> dict:
     parser.add_argument("--accounts", type=int, default=400, help="jumlah akun simulasi")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--cv", type=int, default=5, help="jumlah fold cross-validation")
+    parser.add_argument("--tune-accounts", type=int, default=100, help="akun simulasi tambahan khusus grid search")
     parser.add_argument("--real-dir", default=str(ROOT / "data" / "real"))
     parser.add_argument("--out", default=str(ROOT / "models"))
     parser.add_argument("--save-dataset", action="store_true", help="simpan dataset simulasi ke CSV")
@@ -69,6 +74,10 @@ def main(argv: list[str] | None = None) -> dict:
     sim_raw = simulate_dataset(n_accounts=args.accounts, seed=args.seed)
     if args.save_dataset:
         sim_raw.to_csv(out / "simulated_dataset.csv.gz", index=False)
+
+    tune_seed = args.seed + 1
+    print(f"      + {args.tune_accounts} akun simulasi tambahan untuk grid search (seed={tune_seed})")
+    tune_raw = simulate_dataset(n_accounts=args.tune_accounts, seed=tune_seed)
 
     print("[2/4] Memuat data asli dari", args.real_dir, "...")
     real_raw = load_real_dir(args.real_dir)
@@ -99,10 +108,19 @@ def main(argv: list[str] | None = None) -> dict:
         print(f"[3/4] Tugas '{task_key}' (horizon {horizon}): cross-validation {args.cv}-fold ...")
         sim = M.build_features(sim_raw, horizon=horizon)
         real = M.build_features(real_raw, horizon=horizon)
-        cv = M.cross_validate(sim, n_splits=args.cv, random_state=args.seed, horizon=horizon)
+
+        tune_df = M.build_features(tune_raw, horizon=horizon)
+        print(f"      Grid search ({len(tune_df)} baris, GroupKFold 4-fold, metrik accuracy) ...")
+        tuning = M.tune_hyperparameters(tune_df, horizon=horizon, groups="account", n_splits=4, random_state=args.seed)
+        params = {name: t["best_params"] for name, t in tuning.items()}
+        for name, t in tuning.items():
+            print(f"        {name:20s} {t['best_params']}  ({t['manual_score']:.4f} -> {t['best_score']:.4f})")
+
+        cv = M.cross_validate(sim, n_splits=args.cv, random_state=args.seed, horizon=horizon, params=params)
+        cv["significance"] = M.significance(cv)
 
         train, test = M.split_by_account(sim, test_size=0.2, random_state=args.seed)
-        fitted = M.fit_all(train, random_state=args.seed, horizon=horizon)
+        fitted = M.fit_all(train, random_state=args.seed, horizon=horizon, params=params)
         test_scores = M.evaluate_all(fitted, test)
         has_real = len(real) > 0 and real["is_s"].nunique() == 2
         real_scores = M.evaluate_all(fitted, real) if has_real else None
@@ -114,9 +132,13 @@ def main(argv: list[str] | None = None) -> dict:
             real_cyc = M.add_cycle_groups(real)
             if real_cyc["cycle_group"].nunique() >= 5:
                 print(f"      Latih-uji di data asli saja ({len(real_cyc)} baris, "
-                      f"{real_cyc['cycle_group'].nunique()} siklus pity) ...")
+                      f"{real_cyc['cycle_group'].nunique()} siklus pity, nested grid search) ...")
                 real_cv = M.cross_validate(real_cyc, n_splits=5, random_state=args.seed,
-                                           horizon=horizon, groups="cycle_group")
+                                           horizon=horizon, groups="cycle_group", tune=True)
+                real_cv["significance"] = M.significance(real_cv)
+                # pembanding: hasil dengan pengaturan lama (tanpa grid search)
+                real_cv["manual"] = M.cross_validate(real_cyc, n_splits=5, random_state=args.seed,
+                                                     horizon=horizon, groups="cycle_group")["scores"]
                 real_cv.update({
                     "rows": int(len(real_cyc)),
                     "positives": int(real_cyc["is_s"].sum()),
@@ -137,6 +159,15 @@ def main(argv: list[str] | None = None) -> dict:
                 "real_accounts": int(real["account"].nunique()) if len(real) else 0,
                 "real_rows": int(len(real)),
                 "real_positive": int(real["is_s"].sum()) if len(real) else 0,
+            },
+            "tuning": {
+                "accounts": args.tune_accounts,
+                "seed": tune_seed,
+                "rows": int(len(tune_df)),
+                "n_splits": 4,
+                "scoring": "accuracy",
+                "grids": M.PARAM_GRIDS,
+                "models": tuning,
             },
             "cross_validation": cv,
             "test": test_scores,
@@ -159,6 +190,23 @@ def main(argv: list[str] | None = None) -> dict:
                 f"{sc['roc_auc']:7.4f} {sc['log_loss']:8.4f} {sc['brier']:7.4f}"
             )
         print()
+
+    # Pola soft pity langsung dari data asli (dibandingkan model Markov).
+    if len(real_raw):
+        real_b = M.build_features(real_raw, horizon=10)
+        dt_params = None
+        chosen = (report["tasks"]["next_10"].get("real_cv") or {}).get("params", {}).get("Decision Tree")
+        if chosen:  # pengaturan yang paling sering terpilih di nested CV
+            dt_params = max(chosen, key=lambda p: sum(q == p for q in chosen))
+        dt = M.make_models(args.seed, 10, {"Decision Tree": dt_params} if dt_params else None)["Decision Tree"]
+        dt.fit(real_b[M.FEATURES], real_b[M.TARGET])
+        report["softpity"] = {
+            "ranges": M.softpity_table(real_raw),
+            "tree_root": {
+                **M.tree_root_split(dt),
+                "params": {"max_depth": dt.max_depth, "min_samples_leaf": dt.min_samples_leaf},
+            },
+        }
 
     report = _clean_nan(report)
     print("[4/4] Menyimpan model dan laporan ke", out)

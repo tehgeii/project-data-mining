@@ -22,6 +22,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
@@ -40,14 +41,14 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GroupKFold, GroupShuffleSplit
+from sklearn.model_selection import GridSearchCV, GroupKFold, GroupShuffleSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 from .config import AGENT, WENGINE
-from .probability import hazard
+from .probability import hazard, s_chance_at_pity
 
 FEATURES = ["pity", "pity_ratio", "guaranteed", "is_wengine"]
 TARGET = "is_s"
@@ -139,13 +140,27 @@ class MarkovTheoryClassifier(ClassifierMixin, BaseEstimator):
         return (self.predict_proba(X)[:, 1] >= 0.5).astype(int)
 
 
-def make_models(random_state: int = 42, horizon: int = 1) -> dict[str, BaseEstimator]:
-    return {
+# Ruang pencarian grid search. Nilai yang dipakai sebelum ada grid search ditaruh
+# PALING DEPAN: kalau beberapa kombinasi sama baiknya, GridSearchCV memilih yang
+# pertama, sehingga pengaturan lama hanya diganti bila benar-benar lebih baik.
+PARAM_GRIDS = {
+    "Naive Bayes": {"var_smoothing": [1e-9, 1e-6, 1e-3, 1e-2, 1e-1, 1.0]},
+    "KNN": {"kneighborsclassifier__n_neighbors": [101, 5, 15, 31, 51, 201]},
+    "Logistic Regression": {"logisticregression__C": [1.0, 0.01, 0.1, 10.0]},
+    "Decision Tree": {"max_depth": [6, 3, 4, 8], "min_samples_leaf": [50, 20, 100]},
+    "Random Forest": {"max_depth": [8, 6, 12], "min_samples_leaf": [20, 10, 50]},
+    "XGBoost": {"max_depth": [4, 3, 6], "learning_rate": [0.05, 0.1]},
+}
+
+
+def make_models(random_state: int = 42, horizon: int = 1, params: dict[str, dict] | None = None) -> dict[str, BaseEstimator]:
+    """Semua model dengan pengaturan bawaan, lalu ditimpa ``params`` (hasil grid search)."""
+    models = {
         BASELINE_DUMMY: DummyClassifier(strategy="most_frequent"),
         BASELINE_MARKOV: MarkovTheoryClassifier(horizon=horizon),
         "Naive Bayes": GaussianNB(),
         # Fitur diskalakan supaya jarak tidak didominasi kolom pity (0..89).
-        # k besar karena label sangat berisik (gacha acak).
+        # k awal besar karena label sangat berisik (gacha acak); grid search bisa menggantinya.
         "KNN": make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=101, n_jobs=-1)),
         "Logistic Regression": make_pipeline(
             StandardScaler(), LogisticRegression(max_iter=2000, random_state=random_state)
@@ -171,6 +186,33 @@ def make_models(random_state: int = 42, horizon: int = 1) -> dict[str, BaseEstim
             random_state=random_state,
         ),
     }
+    for name, chosen in (params or {}).items():
+        models[name].set_params(**chosen)
+    return models
+
+
+def tune_hyperparameters(
+    df: pd.DataFrame, horizon: int = 1, groups: str = "account", n_splits: int = 4, random_state: int = 42
+) -> dict[str, dict]:
+    """Grid search setiap algoritma ML dengan GroupKFold (metrik: accuracy).
+
+    Mengembalikan ``{model: {"best_params", "best_score", "manual_score"}}``;
+    ``manual_score`` adalah skor pengaturan lama (kombinasi pertama di grid).
+    """
+    n_splits = min(n_splits, df[groups].nunique())
+    base = make_models(random_state, horizon)
+    out = {}
+    for name, grid in PARAM_GRIDS.items():
+        search = GridSearchCV(base[name], grid, scoring="accuracy", cv=GroupKFold(n_splits=n_splits))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            search.fit(df[FEATURES], df[TARGET], groups=df[groups])
+        out[name] = {
+            "best_params": {k: (v.item() if hasattr(v, "item") else v) for k, v in search.best_params_.items()},
+            "best_score": float(search.best_score_),
+            "manual_score": float(search.cv_results_["mean_test_score"][0]),
+        }
+    return out
 
 
 def evaluate(y_true: np.ndarray, proba: np.ndarray, threshold: float = 0.5) -> dict:
@@ -207,18 +249,38 @@ def split_by_account(df: pd.DataFrame, test_size: float = 0.2, random_state: int
 
 
 def cross_validate(
-    df: pd.DataFrame, n_splits: int = 5, random_state: int = 42, horizon: int = 1, groups: str = "account"
+    df: pd.DataFrame,
+    n_splits: int = 5,
+    random_state: int = 42,
+    horizon: int = 1,
+    groups: str = "account",
+    params: dict[str, dict] | None = None,
+    tune: bool = False,
+    tune_splits: int = 4,
 ) -> dict:
     """GroupKFold per kelompok (default: per akun). Mengembalikan rata-rata dan
-    standar deviasi metrik."""
+    standar deviasi metrik, serta akurasi tiap fold (untuk uji signifikansi).
+
+    ``tune=True`` menjalankan *nested cross-validation*: di setiap fold,
+    hyperparameter dipilih dengan grid search HANYA dari data latih fold itu.
+    """
     n_groups = df[groups].nunique()
     n_splits = min(n_splits, n_groups)
     if n_splits < 2:
         raise ValueError("Butuh minimal 2 kelompok data untuk cross-validation.")
     scores: dict[str, list[dict]] = {}
+    chosen: dict[str, list[dict]] = {}
+    ratios = []
     for train_idx, test_idx in GroupKFold(n_splits=n_splits).split(df, groups=df[groups]):
         train, test = df.iloc[train_idx], df.iloc[test_idx]
-        for name, model in make_models(random_state, horizon).items():
+        ratios.append(len(test) / len(train))
+        fold_params = params
+        if tune:
+            tuned = tune_hyperparameters(train, horizon, groups, tune_splits, random_state)
+            fold_params = {name: t["best_params"] for name, t in tuned.items()}
+            for name, p in fold_params.items():
+                chosen.setdefault(name, []).append(p)
+        for name, model in make_models(random_state, horizon, fold_params).items():
             model.fit(train[FEATURES], train[TARGET])
             proba = model.predict_proba(test[FEATURES])[:, 1]
             scores.setdefault(name, []).append(evaluate(test[TARGET], proba))
@@ -232,7 +294,47 @@ def cross_validate(
             }
             for m in metric_names
         }
-    return {"n_splits": n_splits, "scores": summary}
+    result = {
+        "n_splits": n_splits,
+        "scores": summary,
+        "folds": {name: [f["accuracy"] for f in folds] for name, folds in scores.items()},
+        "test_train_ratio": float(np.mean(ratios)),
+    }
+    if tune:
+        result["params"] = chosen
+    return result
+
+
+def corrected_ttest(a, b, test_train_ratio: float) -> tuple[float, float]:
+    """Uji t berpasangan terkoreksi untuk skor k-fold (Nadeau & Bengio, 2003).
+
+    Uji t biasa terlalu mudah "signifikan" pada cross-validation karena data
+    latih antar-fold saling tumpang tindih; koreksinya menambah suku
+    n_uji/n_latih pada varians. Mengembalikan (t, p dua sisi).
+    """
+    d = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
+    k = len(d)
+    var = float(np.var(d, ddof=1)) if k > 1 else 0.0
+    if var == 0.0:
+        return (0.0, 1.0) if float(np.mean(d)) == 0.0 else (float(np.sign(np.mean(d)) * np.inf), 0.0)
+    t = float(np.mean(d) / np.sqrt((1.0 / k + test_train_ratio) * var))
+    return t, float(2 * stats.t.sf(abs(t), df=k - 1))
+
+
+def significance(cv: dict, alpha: float = 0.05) -> dict:
+    """Bandingkan akurasi setiap model dengan model ML berakurasi rata-rata tertinggi."""
+    folds = cv["folds"]
+    best = max(ML_MODELS, key=lambda m: np.mean(folds[m]))
+    # model lain yang rata-ratanya sama persis (misalnya semua selalu menebak "tidak S")
+    tied = [m for m in ML_MODELS if abs(np.mean(folds[m]) - np.mean(folds[best])) < 1e-12]
+    rows = {}
+    for name, acc in folds.items():
+        if name == best:
+            continue
+        t, p = corrected_ttest(folds[best], acc, cv["test_train_ratio"])
+        rows[name] = {"diff": float(np.mean(folds[best]) - np.mean(acc)), "t": t, "p": p, "significant": bool(p < alpha)}
+    return {"best": best, "tied": tied, "alpha": alpha,
+            "test": "uji t berpasangan terkoreksi (Nadeau & Bengio, 2003)", "rows": rows}
 
 
 def add_cycle_groups(df: pd.DataFrame) -> pd.DataFrame:
@@ -250,8 +352,10 @@ def add_cycle_groups(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def fit_all(train: pd.DataFrame, random_state: int = 42, horizon: int = 1) -> dict[str, BaseEstimator]:
-    models = make_models(random_state, horizon)
+def fit_all(
+    train: pd.DataFrame, random_state: int = 42, horizon: int = 1, params: dict[str, dict] | None = None
+) -> dict[str, BaseEstimator]:
+    models = make_models(random_state, horizon, params)
     for model in models.values():
         model.fit(train[FEATURES], train[TARGET])
     return models
@@ -317,4 +421,38 @@ def feature_importances(models: dict[str, BaseEstimator]) -> dict[str, dict[str,
     if lr is not None:
         coef = lr[-1].coef_[0]
         out["Logistic Regression (koefisien)"] = {f: float(v) for f, v in zip(FEATURES, coef)}
+    return out
+
+
+# Rentang "pull ke-n sejak S terakhir" untuk melihat kapan peluang mulai melonjak.
+SOFTPITY_RANGES = {AGENT.key: [(1, 60), (61, 73), (74, 78), (79, 90)], WENGINE.key: [(1, 55), (56, 64), (65, 80)]}
+
+
+def softpity_table(raw: pd.DataFrame) -> list[dict]:
+    """Laju S per rentang pull pada data riwayat, dibandingkan rata-rata peluang model Markov."""
+    data = build_features(raw, horizon=1)
+    data = data.assign(n=data["pity"] + 1)  # pull ke-n sejak S terakhir
+    rows = []
+    for banner in (AGENT, WENGINE):
+        part = data[data["is_wengine"] == int(banner.key == WENGINE.key)]
+        for lo, hi in SOFTPITY_RANGES[banner.key]:
+            x = part[(part["n"] >= lo) & (part["n"] <= hi)]
+            if x.empty:
+                continue
+            rows.append({
+                "banner": banner.key, "lo": lo, "hi": hi, "pulls": int(len(x)), "s": int(x[TARGET].sum()),
+                "rate": float(x[TARGET].mean()),
+                "model": float(np.mean([s_chance_at_pity(banner, int(n)) for n in x["n"]])),
+                "soft_pity_start": banner.soft_pity_start,
+            })
+    return rows
+
+
+def tree_root_split(model: DecisionTreeClassifier) -> dict:
+    """Pemisah pertama (akar) Decision Tree, diterjemahkan ke pity tiap banner bila memakai pity_ratio."""
+    feature = FEATURES[model.tree_.feature[0]]
+    threshold = float(model.tree_.threshold[0])
+    out = {"feature": feature, "threshold": threshold}
+    if feature == "pity_ratio":
+        out.update({"agent_pity": threshold * AGENT.hard_pity, "wengine_pity": threshold * WENGINE.hard_pity})
     return out

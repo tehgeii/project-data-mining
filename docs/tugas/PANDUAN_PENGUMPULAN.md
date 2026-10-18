@@ -9,7 +9,7 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 | `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal Proyek Akhir (Bab I–III, jadwal, pustaka) |
 | `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 18 slide + catatan pembicara (±25 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
-| `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 24 slide + catatan pembicara (±35 menit) |
+| `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 26 slide + catatan pembicara (±38 menit) |
 | `sumber/` | (tidak dikumpulkan) | Kode pembuat keempat file di atas. Lihat `sumber/README.md` |
 
 > Proposal UTS sudah memuat "Hasil Awal (Prototipe)" karena aplikasinya sudah jadi.
@@ -58,9 +58,9 @@ Catatan pembicara untuk setiap slide sudah ada di file `.pptx`
 | Aturan banner & landasan teori | 7–10 | 6–9 | 6 menit |
 | Metodologi & data | 11–14 | 10–12 | 5 menit |
 | Aplikasi (demo langsung) | 15 | 13–14 | 3 menit |
-| Hasil & pembahasan (UAS: termasuk pola soft pity di data asli) | 16 | 15–22 | 2 (UTS) / 12 (UAS) menit |
-| Jadwal / kesimpulan & penutup | 17–18 | 23–24 | 2 menit |
-| **Total** | | | **±25 menit (UTS) / ±35 menit (UAS)** |
+| Hasil & pembahasan (UAS: termasuk grid search, uji signifikansi, dan pola soft pity) | 16 | 15–24 | 2 (UTS) / 15 (UAS) menit |
+| Jadwal / kesimpulan & penutup | 17–18 | 25–26 | 2 menit |
+| **Total** | | | **±25 menit (UTS) / ±38 menit (UAS)** |
 
 Tips rekaman:
 - Rekam layar dengan OBS Studio (gratis) atau Zoom (record to computer), kamera di pojok.
@@ -93,9 +93,19 @@ juga naik (86,6% vs 83,4%). Kalau dibandingkan dengan baseline, keunggulan model
 sekitar 7 poin. Akurasi dari dua data yang proporsi kelasnya berbeda tidak bisa dibandingkan langsung.
 
 **Jadi Decision Tree yang paling bagus?**
-Angkanya memang tertinggi, tetapi selisihnya dengan Random Forest dan XGBoost lebih kecil daripada
-simpangan bakunya (±3% di data asli, ±0,2% di simulasi), jadi ketiganya **setara**. Jangan bilang
-Decision Tree "jauh lebih baik". Kelebihan Decision Tree: aturannya paling mudah dibaca.
+Angkanya memang tertinggi di data asli (93,10%), tetapi **uji t berpasangan terkoreksi** menunjukkan
+selisihnya dengan kelima algoritma lain tidak signifikan (p = 0,31–0,75). Di simulasi, Decision Tree,
+Random Forest, XGBoost, dan KNN juga tidak berbeda nyata. Jadi jawabannya: model pohon (dan KNN)
+**setara terbaik**, jangan bilang Decision Tree "jauh lebih baik". Kelebihan Decision Tree: aturannya
+paling mudah dibaca.
+
+**Apa itu uji signifikansi, dan kenapa pakai versi "terkoreksi"?**
+Uji signifikansi memeriksa apakah selisih akurasi dua model nyata atau hanya kebetulan. Kami
+membandingkan akurasi setiap model di kelima fold dengan model terbaik. Uji t biasa terlalu mudah
+menyatakan "berbeda" pada cross-validation karena data latih antar-fold saling tumpang tindih,
+sehingga dipakai koreksi Nadeau & Bengio (2003) yang memperbesar varians. Hasilnya: di simulasi,
+Naive Bayes dan Logistic Regression **nyata lebih rendah** (p < 0,001); di data asli, hanya baseline
+yang nyata lebih rendah (p = 0,042), karena datanya baru 20 siklus pity.
 
 **Kenapa tidak memakai SMOTE atau oversampling untuk data tidak seimbang?**
 Yang dicari adalah angka peluang yang tepat. Menambah data buatan kelas minoritas akan menggeser
@@ -105,11 +115,16 @@ metrik yang tepat: Balanced Accuracy, F1, ROC-AUC, Log Loss, dan Brier Score.
 **Datanya cuma 2 akun, cukup?**
 Jumlah barisnya sudah memenuhi syarat (1.441 pull, 1.209 baris setelah dibersihkan), tetapi
 isinya baru 22 S-Rank dan 20 siklus pity, dan baris dalam satu siklus saling berkaitan. Karena
-itu simpangan bakunya masih ±2–4%. Ini keterbatasan yang kami tulis; solusinya menambah akun.
+itu simpangan bakunya masih ±2,7–4,6%, dan uji signifikansi di data asli belum bisa membedakan
+antaralgoritma. Ini keterbatasan yang kami tulis; solusinya menambah akun (minimal 5, idealnya 10+).
 
 **Hyperparameter-nya dipilih bagaimana?**
-Secara manual, disesuaikan dengan data simulasi yang besar. Itu sebabnya KNN (k = 101) turun di
-data asli yang kecil. Saran pengembangannya adalah grid search.
+Dengan **grid search** (`GridSearchCV`): setiap algoritma diberi beberapa pilihan nilai (misalnya
+k = 5, 15, 31, 51, 101, 201 untuk KNN), lalu dipilih yang akurasinya tertinggi. Supaya tidak bocor,
+grid search memakai **100 akun simulasi tambahan** yang tidak dipakai untuk evaluasi. Di eksperimen
+data asli, grid search diulang **di dalam data latih setiap fold** (*nested cross-validation*), jadi
+data uji tidak pernah ikut memilih pengaturan. Hasilnya: Naive Bayes paling terbantu, sedangkan
+model pohon hampir tidak berubah.
 
 **Apakah aplikasi ini bisa meramal kapan dapat S? Apakah tidak mendorong orang berjudi?**
 Tidak meramal hasil, karena setiap pull tetap acak; aplikasi hanya memperkirakan **peluang**.
@@ -119,17 +134,18 @@ dan kemungkinan terburuk jumlah pull sebelum menghabiskan mata uang permainan.
 **`pity_ratio` kan turunan dari `pity`, kenapa dipakai dua-duanya?**
 `pity_ratio` membuat dua banner sebanding (hard pity 90 vs 80). Model pohon cukup memilih salah
 satu. Untuk Naive Bayes, dua fitur yang saling berkaitan memang melanggar asumsi "saling bebas",
-dan itu salah satu alasan Naive Bayes paling rendah.
+dan itu salah satu alasan Naive Bayes tertinggal dari model pohon.
 
 **Datasetnya berapa baris? (syarat: tabel minimal 500–1.000 baris)**
 Data asli 1.441 pull (±1.200 baris setelah dibersihkan) dari 2 akun, ditambah data simulasi
 ±314.000 baris. Keenam algoritma juga sudah dilatih dan diuji **hanya dengan data asli**
-(1.209 baris, 5-fold per siklus pity): Decision Tree tertinggi (±93,1%), setara Random Forest dan XGBoost.
+(1.209 baris, 5-fold per siklus pity): Decision Tree tertinggi (±93,1%), tetapi selisihnya dengan algoritma lain belum signifikan.
 
-**Kenapa KNN turun saat dilatih dengan data asli saja?**
-Nilai k = 101 tetangga terlalu besar untuk data latih ±970 baris yang hanya berisi ±130 kelas
-positif, sehingga tetangga terdekat hampir selalu kelas mayoritas. Ini menunjukkan hyperparameter
-harus disesuaikan dengan ukuran data.
+**Kenapa KNN sempat turun saat dilatih dengan data asli saja?**
+Dengan pengaturan awal k = 101, akurasinya hanya 87,4% (hampir sama dengan baseline), karena 101
+tetangga terlalu banyak untuk data latih ±970 baris yang hanya berisi ±130 kelas positif, sehingga
+tetangga terdekat hampir selalu kelas mayoritas. Setelah grid search memilih k = 5–31 di setiap
+fold, akurasinya naik menjadi 91,0%. Ini menunjukkan hyperparameter harus disesuaikan dengan ukuran data.
 
 **Kenapa memakai data simulasi?**
 Satu akun asli hanya punya ratusan pull dan beberapa S-Rank, terlalu sedikit untuk melatih.
@@ -142,11 +158,14 @@ pada data tidak seimbang. Karena itu kami memakai Balanced Accuracy, F1, ROC-AUC
 serta tugas B yang lebih seimbang.
 
 **Algoritma mana yang terbaik?**
-Decision Tree, Random Forest, XGBoost, dan KNN setara (±91% simulasi, ±93% data asli).
-Decision Tree sedikit unggul di F1 dan Log Loss, dan aturannya paling mudah dijelaskan.
+Decision Tree, Random Forest, XGBoost, dan KNN setara dan tidak berbeda nyata (±91% simulasi,
+±93% data asli). Decision Tree sedikit unggul di Balanced Accuracy dan Log Loss, dan aturannya
+paling mudah dijelaskan.
 
-**Kenapa Naive Bayes paling rendah?**
-Naive Bayes mengasumsikan fitur saling bebas dan berdistribusi normal. Padahal `pity` dan
+**Kenapa Naive Bayes dan Logistic Regression lebih rendah?**
+Keduanya nyata lebih rendah di simulasi (p < 0,001) walaupun hyperparameter-nya sudah dipilih dengan
+grid search. Logistic Regression hanya bisa membentuk kurva sigmoid yang halus, sehingga tidak bisa
+meniru lonjakan tajam setelah soft pity. Naive Bayes mengasumsikan fitur saling bebas dan berdistribusi normal. Padahal `pity` dan
 `pity_ratio` sangat berkaitan, dan peluang S melonjak tajam setelah soft pity (tidak berbentuk lonceng).
 
 **Apakah script PowerShell aman?**

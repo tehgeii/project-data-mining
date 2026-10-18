@@ -95,8 +95,47 @@ def cv_table(cv: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-tab_test, tab_cv, tab_real, tab_curve, tab_cm, tab_imp = st.tabs(
-    ["Hasil test", "Cross-validation", "Latih di data asli", "Kurva peluang", "Confusion matrix", "Fitur"]
+# Nama singkat parameter untuk ditampilkan.
+PARAM_LABELS = {
+    "kneighborsclassifier__n_neighbors": "k",
+    "logisticregression__C": "C",
+    "var_smoothing": "var_smoothing",
+    "max_depth": "max_depth",
+    "min_samples_leaf": "min_samples_leaf",
+    "learning_rate": "learning_rate",
+}
+
+
+def fmt_params(params: dict) -> str:
+    return ", ".join(f"{PARAM_LABELS.get(k, k)} = {v:g}" if isinstance(v, float) else f"{PARAM_LABELS.get(k, k)} = {v}"
+                     for k, v in params.items())
+
+
+def show_significance(cv: dict) -> None:
+    """Tabel uji signifikansi terhadap model ML berakurasi tertinggi."""
+    sig = cv.get("significance")
+    if not sig:
+        return
+    tied = sig.get("tied", [sig["best"]])
+    acuan = (f"model terbaik (**{sig['best']}**)" if len(tied) == 1 else
+             f"**{sig['best']}** (akurasi rata-ratanya seri dengan {', '.join(m for m in tied if m != sig['best'])})")
+    st.markdown(
+        f"**Uji signifikansi** terhadap {acuan}: {sig['test']}, "
+        f"α = {sig['alpha']}. Selisih yang tidak signifikan berarti kedua model **setara**."
+    )
+    rows = []
+    for name, r in sig["rows"].items():
+        if r["significant"]:
+            verdict = "lebih rendah secara nyata" if r["diff"] > 0 else "lebih tinggi secara nyata"
+        else:
+            verdict = "setara (tidak berbeda nyata)"
+        rows.append({"Model": name, "Selisih akurasi": f"{-r['diff'] * 100:+.2f} poin",
+                     "p-value": f"{r['p']:.3f}", "Kesimpulan": verdict})
+    st.dataframe(pd.DataFrame(rows), hide_index=True)
+
+
+tab_test, tab_cv, tab_real, tab_soft, tab_curve, tab_cm, tab_imp = st.tabs(
+    ["Hasil test", "Cross-validation", "Latih di data asli", "Pola soft pity", "Kurva peluang", "Confusion matrix", "Fitur"]
 )
 
 with tab_test:
@@ -144,6 +183,20 @@ with tab_cv:
     cv = task["cross_validation"]
     st.write(f"GroupKFold {cv['n_splits']}-fold (dibagi per akun), rata-rata ± standar deviasi:")
     st.dataframe(cv_table(cv), hide_index=True)
+    show_significance(cv)
+    tuning = task.get("tuning")
+    if tuning:
+        with st.expander("Hyperparameter hasil grid search"):
+            st.write(
+                f"Dipilih dengan grid search (GroupKFold {tuning['n_splits']}-fold, metrik {tuning['scoring']}) "
+                f"pada **{tuning['accounts']} akun simulasi tambahan** (seed {tuning['seed']}, {tuning['rows']:,} baris) "
+                "yang tidak dipakai untuk evaluasi, sehingga tidak ada kebocoran data."
+            )
+            st.dataframe(pd.DataFrame([
+                {"Model": name, "Hyperparameter terpilih": fmt_params(t["best_params"]),
+                 "Accuracy pengaturan awal": f"{t['manual_score']:.4f}", "Accuracy grid search": f"{t['best_score']:.4f}"}
+                for name, t in tuning["models"].items()
+            ]), hide_index=True)
 
 with tab_real:
     rcv = task.get("real_cv")
@@ -154,7 +207,9 @@ with tab_real:
             f"Semua algoritma **dilatih dan diuji hanya dengan data asli pemain** "
             f"({rcv['accounts']} akun, **{rcv['rows']:,} baris**, {rcv['positives']} kelas positif). "
             f"Data dibagi per **siklus pity** ({rcv['groups']} siklus, GroupKFold {rcv['n_splits']}-fold), "
-            "supaya pull dari siklus yang sama tidak ada di data latih dan data uji sekaligus."
+            "supaya pull dari siklus yang sama tidak ada di data latih dan data uji sekaligus. "
+            "Hyperparameter dipilih ulang dengan grid search **di dalam setiap fold** (*nested cross-validation*), "
+            "hanya dari data latih fold tersebut."
         )
         st.dataframe(cv_table(rcv), hide_index=True)
         acc = {n: s["accuracy"]["mean"] for n, s in rcv["scores"].items() if n in ML_MODELS}
@@ -167,12 +222,71 @@ with tab_real:
         fig.update_layout(title="Accuracy (data asli saja)", yaxis_range=[80, 100], yaxis_title="Accuracy (%)",
                           height=360, margin=dict(l=10, r=10, t=50, b=10))
         st.plotly_chart(fig, config={"displayModeBar": False})
-        # rata-rata ukuran data latih per fold (4 dari 5 bagian), dibulatkan ke puluhan
-        train_rows = round(rcv["rows"] * (rcv["n_splits"] - 1) / rcv["n_splits"], -1)
+        tops = [n for n, v in acc.items() if abs(v - acc[best]) < 1e-12]
+        st.caption(f"Akurasi tertinggi: {', '.join(tops)} ({acc[best]:.2%}{', seri' if len(tops) > 1 else ''}). "
+                   "Dengan data yang jauh lebih sedikit, hasilnya tetap sejalan dengan data simulasi.")
+        show_significance(rcv)
+        if rcv.get("manual") and rcv.get("params"):
+            st.markdown("**Pengaruh grid search** (pengaturan awal vs dipilih ulang di setiap fold):")
+            st.dataframe(pd.DataFrame([
+                {"Model": name,
+                 "Accuracy pengaturan awal": f"{rcv['manual'][name]['accuracy']['mean']:.4f}",
+                 "Accuracy grid search": f"{rcv['scores'][name]['accuracy']['mean']:.4f}",
+                 "Hyperparameter terpilih per fold": " | ".join(fmt_params(p) for p in rcv["params"][name])}
+                for name in rcv["params"]
+            ]), hide_index=True)
+            ks = sorted({p["kneighborsclassifier__n_neighbors"] for p in rcv["params"].get("KNN", [])})
+            k0 = task.get("tuning", {}).get("grids", {}).get("KNN", {}).get("kneighborsclassifier__n_neighbors", [None])[0]
+            if ks and k0 and max(ks) < k0:
+                st.caption(f"Contoh: pada data asli yang kecil, KNN memilih k = {', '.join(map(str, ks))}, jauh lebih "
+                           f"kecil daripada k = {k0} di pengaturan awal, sehingga tidak lagi selalu menebak kelas mayoritas.")
+
+with tab_soft:
+    sp = report.get("softpity")
+    if not sp:
+        st.info("Belum ada data asli di `data/real/` untuk analisis ini.")
+    else:
+        st.markdown(
+            "HoYoverse **tidak mengumumkan** soft pity. Di sini laju S-Rank per pull dihitung langsung dari "
+            "**data asli pemain** untuk setiap rentang pull sejak S-Rank terakhir, lalu dibandingkan dengan "
+            "peluang model Markov (yang memakai estimasi soft pity). Analisis ini tidak bergantung pada "
+            "pilihan tugas di atas."
+        )
+        soft_key = st.segmented_control(
+            "Banner", ["agent", "wengine"], default="agent", required=True, key="soft_banner",
+            format_func=lambda k: "Agent" if k == "agent" else "W-Engine",
+        )
+        rows = [r for r in sp["ranges"] if r["banner"] == soft_key]
+        labels = [f"pull ke-{r['lo']}–{r['hi']}" for r in rows]
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=labels, y=[r["rate"] * 100 for r in rows], name="Data asli", marker_color="#F5A623",
+            text=[f"{r['rate'] * 100:.1f}% ({r['s']}/{r['pulls']})" for r in rows], textposition="outside",
+        ))
+        fig.add_trace(go.Scatter(
+            x=labels, y=[r["model"] * 100 for r in rows], name="Model Markov", mode="lines+markers",
+            line=dict(color="#E6EDF3", dash="dash"), marker=dict(symbol="diamond", size=10),
+        ))
+        top = max(max(r["rate"], r["model"]) for r in rows) * 100
+        fig.update_layout(yaxis_title="Laju S-Rank per pull (%)", yaxis_range=[0, top * 1.3 + 2], height=380,
+                          margin=dict(l=10, r=10, t=30, b=10), legend=dict(orientation="h", y=1.12))
+        st.plotly_chart(fig, config={"displayModeBar": False})
+        st.dataframe(pd.DataFrame([
+            {"Rentang": label, "Jumlah pull": r["pulls"], "S-Rank": r["s"],
+             "Laju data asli": f"{r['rate'] * 100:.1f}%", "Model Markov": f"{r['model'] * 100:.1f}%"}
+            for label, r in zip(labels, rows)
+        ]), hide_index=True)
+        root = sp.get("tree_root") or {}
+        if root.get("feature") == "pity_ratio":
+            st.success(
+                f"Decision Tree yang dilatih **hanya dengan data asli** memisahkan data pertama kali di "
+                f"pity_ratio ≤ {root['threshold']:.3f}, yaitu pity ±{root['agent_pity']:.0f} (Agent) / "
+                f"±{root['wengine_pity']:.0f} (W-Engine): sekitar 8–10 pull sebelum soft pity, tanpa pernah "
+                "diberi tahu tentang soft pity."
+            )
         st.caption(
-            f"Akurasi tertinggi: {best} ({acc[best]:.2%}). Dengan data yang jauh lebih sedikit, hasilnya tetap "
-            f"sejalan dengan data simulasi. KNN memakai k = 101 tetangga; untuk data latih ±{train_rows:,.0f} "
-            "baris nilai k ini terlalu besar sehingga KNN cenderung selalu menebak kelas mayoritas."
+            f"Estimasi soft pity yang dipakai model: pull ke-{rows[0]['soft_pity_start']}. Data asli baru "
+            f"{ds['real_accounts']} akun, jadi rentang dengan sedikit pull masih kurang pasti."
         )
 
 with tab_curve:

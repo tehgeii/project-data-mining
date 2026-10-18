@@ -2,9 +2,9 @@
 
     python3 figs.py          (dari folder docs/tugas/sumber, butuh matplotlib)
 
-Menghasilkan fig/fig_akurasi.png, fig/fig_real_cv.png, dan fig/fig_softpity.png (pola soft pity
-langsung dari data/real). Jalankan setelah scripts/train_models.py, lalu bash build.sh untuk
-memperbarui docx/pptx. Angka tabel pola soft pity ikut dicetak supaya laporan bisa disamakan.
+Menghasilkan semua grafik yang bergantung pada hasil model: fig_akurasi, fig_real_cv,
+fig_metrik, fig_cm, fig_kurva, fig_importance, dan fig_softpity. Jalankan setelah
+scripts/train_models.py, lalu bash build.sh untuk memperbarui docx/pptx.
 """
 
 import json
@@ -33,7 +33,7 @@ COLOR = {
     "Naive Bayes": "#8E6AC8", "KNN": "#D9548C", "Logistic Regression": "#2F6FD6",
     "Decision Tree": "#E08A00", "Random Forest": "#C8463C", "XGBoost": "#2E9B4E",
 }
-BLUE, ORANGE = "#2F6FD6", "#E08A00"
+BLUE, ORANGE, GREEN = "#2F6FD6", "#E08A00", "#2E9B4E"
 
 
 def style(ax):
@@ -89,38 +89,12 @@ def fig_real_cv(task):
     plt.close(fig)
 
 
-# Rentang "pull ke-n sejak S-Rank terakhir" untuk melihat kapan peluang mulai melonjak.
-RANGES = {"agent": [(1, 60), (61, 73), (74, 78), (79, 90)], "wengine": [(1, 55), (56, 64), (65, 80)]}
-
-
-def softpity_table():
-    """Laju S-Rank per rentang pull pada data asli, dibandingkan rata-rata peluang model Markov."""
-    sys.path.insert(0, str(ROOT))
-    from zzzgacha import models as M
-    from zzzgacha import probability as P
-    from zzzgacha.config import BANNERS
-    from zzzgacha.dataset import load_real_dir
-
-    data = M.build_features(load_real_dir(ROOT / "data" / "real"), horizon=1)
-    data = data.assign(n=data["pity"] + 1)  # pull ke-n sejak S-Rank terakhir
-    rows = []
-    for key, ranges in RANGES.items():
-        banner = BANNERS[key]
-        part = data[data["is_wengine"] == int(key == "wengine")]
-        for lo, hi in ranges:
-            x = part[(part["n"] >= lo) & (part["n"] <= hi)]
-            model = sum(P.s_chance_at_pity(banner, int(n)) for n in x["n"]) / len(x)
-            rows.append({"banner": key, "lo": lo, "hi": hi, "pulls": len(x), "s": int(x["is_s"].sum()),
-                         "data": float(x["is_s"].mean()), "model": model, "soft": banner.soft_pity_start})
-    return rows
-
-
 def fig_softpity(rows):
     fig, axes = plt.subplots(1, 2, figsize=(9, 4.0), dpi=200, gridspec_kw={"width_ratios": [4, 3]})
     for ax, key, title in ((axes[0], "agent", "Agent"), (axes[1], "wengine", "W-Engine")):
         r = [row for row in rows if row["banner"] == key]
         x = range(len(r))
-        data = [row["data"] * 100 for row in r]
+        data = [row["rate"] * 100 for row in r]
         model = [row["model"] * 100 for row in r]
         ax.bar(x, data, 0.6, color=ORANGE, label="Data asli")
         ax.plot(x, model, "D--", color="#222222", markersize=6, linewidth=1, label="Model Markov")
@@ -128,7 +102,7 @@ def fig_softpity(rows):
             top = max(data[i], model[i])
             ax.text(i, top + 2, f"{data[i]:.1f}%\n({row['s']}/{row['pulls']})", ha="center", va="bottom", fontsize=8)
         ax.set_xticks(list(x), [f"pull ke-\n{row['lo']}–{row['hi']}" for row in r], fontsize=8)
-        ax.set_title(f"{title} (soft pity estimasi: pull ke-{r[0]['soft']})", fontsize=10)
+        ax.set_title(f"{title} (soft pity estimasi: pull ke-{r[0]['soft_pity_start']})", fontsize=10)
         ax.set_ylim(0, 58)
         style(ax)
     axes[0].set_ylabel("Laju S-Rank per pull (%)")
@@ -138,14 +112,94 @@ def fig_softpity(rows):
     plt.close(fig)
 
 
+def fig_metrik(task):
+    """Tugas B: Accuracy, Balanced Accuracy, dan F1 dari cross-validation simulasi."""
+    names = [BASELINE, MARKOV, *ML]
+    sc = task["cross_validation"]["scores"]
+    fig, ax = plt.subplots(figsize=(9, 4), dpi=200)
+    w = 0.27
+    for i, (key, label, color) in enumerate((("accuracy", "Accuracy", BLUE), ("balanced_accuracy", "Balanced Accuracy", ORANGE),
+                                             ("f1", "F1-score", GREEN))):
+        ax.bar([k + (i - 1) * w for k in range(len(names))], [sc[n][key]["mean"] for n in names], w, color=color, label=label)
+    ax.set_xticks(range(len(names)), [LABEL[n] for n in names], fontsize=9)
+    ax.set_ylim(0, 1.0)
+    ax.legend(loc="upper left", ncol=3, frameon=False, fontsize=12)
+    style(ax)
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_metrik.png")
+    plt.close(fig)
+
+
+def fig_cm(task):
+    """Tugas B: confusion matrix di data uji simulasi untuk tiga model contoh."""
+    shown = ((BASELINE, "Baseline"), ("Logistic Regression", "Logistic Regression"), ("XGBoost", "XGBoost"))
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.5), dpi=200)
+    for ax, (name, title) in zip(axes, shown):
+        cm = task["test"][name]["confusion_matrix"]
+        grid = [[cm["tn"], cm["fp"]], [cm["fn"], cm["tp"]]]
+        top = max(max(row) for row in grid)
+        ax.imshow(grid, cmap="Blues", vmin=0, vmax=top)
+        for r in range(2):
+            for c in range(2):
+                v = grid[r][c]
+                ax.text(c, r, f"{v:,}".replace(",", "."), ha="center", va="center", fontsize=12,
+                        color="white" if v > top / 2 else "black")
+        ax.set_xticks([0, 1], ["Tebak: tidak S", "Tebak: S"])
+        ax.set_yticks([0, 1], ["Asli: tidak S", "Asli: S"])
+        ax.set_title(title, fontsize=13)
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_cm.png")
+    plt.close(fig)
+
+
+def fig_kurva(task):
+    """Tugas B: peluang dapat S dalam 10 pull menurut setiap model, per banner."""
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4), dpi=200, sharey=True)
+    for ax, (key, title) in zip(axes, (("agent", "Agent Terbatas"), ("wengine", "W-Engine Terbatas"))):
+        curve, emp = task["curves"][key], task["empirical"]["sim"][key]
+        ax.scatter(emp["pity"], [v * 100 for v in emp["rate"]], s=6, color="#BBBBBB", label="Data (empiris)", zorder=1)
+        ax.plot(curve["pity"], [v * 100 for v in curve[MARKOV]], "--", color="#333333", linewidth=3.5, label=MARKOV, zorder=2)
+        for name in ML:
+            ax.plot(curve["pity"], [v * 100 for v in curve[name]], color=COLOR[name], linewidth=1.6, label=name, zorder=3)
+        ax.set_title(title, fontsize=13)
+        ax.set_xlabel("Pity sekarang")
+        ax.grid(color="#DDDDDD", linewidth=0.8)
+        ax.set_axisbelow(True)
+    axes[0].set_ylabel("Peluang dapat S dalam 10 pull (%)")
+    axes[1].legend(loc="upper left", frameon=False, fontsize=8)
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_kurva.png")
+    plt.close(fig)
+
+
+def fig_importance(task):
+    """Tugas B: feature importance tiga model berbasis pohon."""
+    imp = task["feature_importances"]
+    models = (("Decision Tree", ORANGE), ("Random Forest", COLOR["Random Forest"]), ("XGBoost", GREEN))
+    features = list(imp["Decision Tree"])
+    fig, ax = plt.subplots(figsize=(8, 3.4), dpi=200)
+    h = 0.27
+    for i, (name, color) in enumerate(models):
+        ax.barh([k + (i - 1) * h for k in range(len(features))], [imp[name][f] for f in features], h, color=color, label=name)
+    ax.set_yticks(range(len(features)), features)
+    ax.set_xlabel("Feature importance")
+    ax.legend(loc="upper right", frameon=False, fontsize=11)
+    ax.grid(axis="x", color="#DDDDDD", linewidth=0.8)
+    ax.set_axisbelow(True)
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_importance.png")
+    plt.close(fig)
+
+
+def main(report_path=REPORT):
+    report = json.loads(Path(report_path).read_text(encoding="utf-8"))
+    task = report["tasks"]["next_10"]
+    for make in (fig_akurasi, fig_real_cv, fig_metrik, fig_cm, fig_kurva, fig_importance):
+        make(task)
+    if report.get("softpity"):
+        fig_softpity(report["softpity"]["ranges"])
+    print("selesai: grafik di", FIG)
+
+
 if __name__ == "__main__":
-    task = json.loads(REPORT.read_text(encoding="utf-8"))["tasks"]["next_10"]
-    fig_akurasi(task)
-    fig_real_cv(task)
-    rows = softpity_table()
-    fig_softpity(rows)
-    print("selesai:", FIG / "fig_akurasi.png", FIG / "fig_real_cv.png", FIG / "fig_softpity.png")
-    print("\nPola soft pity (data asli):")
-    for row in rows:
-        print(f"  {row['banner']:8s} pull ke-{row['lo']}–{row['hi']}: {row['pulls']:4d} pull, {row['s']:2d} S, "
-              f"data {row['data'] * 100:.1f}%, model {row['model'] * 100:.1f}%")
+    main(sys.argv[1] if len(sys.argv) > 1 else REPORT)
