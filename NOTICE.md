@@ -25,5 +25,5 @@ menyebutkan sumbernya.
 
 Aplikasi memakai pustaka sumber terbuka dengan lisensinya masing-masing, antara lain
 Streamlit (Apache-2.0), scikit-learn (BSD-3-Clause), XGBoost (Apache-2.0),
-pandas (BSD-3-Clause), NumPy (BSD-3-Clause), Plotly (MIT), requests (Apache-2.0),
-dan joblib (BSD-3-Clause). Pembuat dokumen memakai docx dan PptxGenJS (keduanya MIT).
+pandas (BSD-3-Clause), NumPy (BSD-3-Clause), SciPy (BSD-3-Clause), Plotly (MIT),
+requests (Apache-2.0), dan joblib (BSD-3-Clause). Pembuat dokumen memakai docx dan PptxGenJS (keduanya MIT).
