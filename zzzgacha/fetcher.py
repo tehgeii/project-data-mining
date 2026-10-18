@@ -5,6 +5,7 @@ Keamanan:
   URL yang ditempel pengguna tidak pernah dipakai langsung, jadi URL palsu
   tidak bisa membuat server mengakses alamat lain.
 - ``authkey`` tidak pernah disimpan, dicetak, atau dimasukkan ke pesan error.
+- Redirect tidak diikuti, supaya URL yang memuat authkey tidak terkirim ke host lain.
 """
 
 from __future__ import annotations
@@ -94,7 +95,7 @@ def _get_json(session: requests.Session, url: str, sleep: Callable[[float], None
     last_error = "tidak diketahui"
     for attempt in range(MAX_RETRIES):
         try:
-            resp = session.get(url, timeout=REQUEST_TIMEOUT)
+            resp = session.get(url, timeout=REQUEST_TIMEOUT, allow_redirects=False)
             if resp.status_code >= 500 or resp.status_code == 429:
                 last_error = f"server membalas HTTP {resp.status_code}"
             elif resp.status_code != 200:

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
+import secrets
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -27,7 +27,7 @@ def parse_json_bytes(raw: bytes) -> list[dict]:
         raise RecordError("File terlalu besar (maksimal 20 MB).")
     try:
         data = json.loads(raw.decode("utf-8-sig"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
         raise RecordError("File bukan JSON yang valid.") from exc
 
     items: list[dict] = []
@@ -102,17 +102,17 @@ def to_uigf(df: pd.DataFrame, lang: str = "en-us") -> bytes:
     return json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
 
 
-def anonymize(annotated: pd.DataFrame, salt: str = "zzz-data-mining") -> pd.DataFrame:
+def anonymize(annotated: pd.DataFrame) -> pd.DataFrame:
     """Dataset anonim untuk dikumpulkan kelompok: tanpa UID asli, nama, dan waktu.
 
-    UID diganti hash pendek supaya pull dari akun yang sama tetap bisa
-    dikelompokkan (penting untuk pembagian train/test per akun).
+    Setiap UID diganti kode ACAK supaya pull dari akun yang sama tetap bisa
+    dikelompokkan (penting untuk pembagian train/test per akun). Kode ini sengaja
+    tidak dihitung dari UID: hash UID bisa ditebak balik karena UID hanya 10 digit.
     """
     cols = ["account", "banner", "gacha_type", "pity", "guaranteed", "is_s", "featured", "first_segment"]
     if annotated.empty:
         return pd.DataFrame(columns=cols)
     out = annotated.copy()
-    out["account"] = out["uid"].map(
-        lambda u: hashlib.sha256(f"{salt}:{u}".encode()).hexdigest()[:12]
-    )
+    codes = {uid: secrets.token_hex(6) for uid in out["uid"].unique()}
+    out["account"] = out["uid"].map(codes)
     return out[cols].reset_index(drop=True)

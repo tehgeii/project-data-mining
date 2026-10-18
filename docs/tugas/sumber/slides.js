@@ -6,6 +6,9 @@ const FIG = process.env.FIG;
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13.33 x 7.5
 pres.title = "ZZZ Gacha Predictor";
+pres.author = "Kelompok 6 A11.4502";
+pres.company = "Universitas Dian Nuswantoro";
+pres.subject = "Penambangan Data";
 
 const C = { bg: "0E1117", bg2: "161B22", card: "1C2230", line: "30363D", txt: "E6EDF3", mut: "A9B4C2", dim: "8B949E", acc: "F5A623", blue: "58A6FF", green: "3FB950", red: "F85149", purple: "BC8CFF", pink: "FF7EB6" };
 const HF = "Cambria", BF = "Calibri";

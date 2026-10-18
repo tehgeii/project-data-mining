@@ -125,3 +125,17 @@ def test_anonymize_removes_identity():
     assert "uid" not in anon.columns and "name" not in anon.columns and "time" not in anon.columns
     assert "123456789" not in anon.to_csv()
     assert anon["account"].nunique() == 1
+
+
+def test_anonymous_code_is_random_not_derived_from_uid():
+    import hashlib
+
+    df = annotate(to_dataframe([item(uid="123456789") for _ in range(3)]))
+    a, b = anonymize(df)["account"].iloc[0], anonymize(df)["account"].iloc[0]
+    assert a != b  # tiap ekspor dapat kode baru
+    assert a != hashlib.sha256(b"zzz-data-mining:123456789").hexdigest()[:12]
+
+
+def test_deeply_nested_json_is_rejected_cleanly():
+    with pytest.raises(RecordError, match="JSON"):
+        parse_json_bytes(b"[" * 100000 + b"]" * 100000)

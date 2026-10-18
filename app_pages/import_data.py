@@ -66,6 +66,8 @@ with tab_file:
             _load(parse_json_bytes(uploaded.getvalue()), f"dari file {uploaded.name}")
         except RecordError as exc:
             st.error(str(exc))
+        except Exception:
+            st.error("File tidak dapat dibaca. Pastikan file adalah ekspor UIGF v4 Zenless Zone Zero.")
     st.divider()
     st.write("Belum punya data? Coba dengan **data contoh** (buatan, bukan akun asli).")
     if st.button("Pakai data contoh", width="stretch"):

@@ -466,6 +466,7 @@ const front = [...cover, ...kata, ...L.TOC(), ...L.LIST("tab"), ...L.LIST("fig")
 
 const doc = new Document({
   creator: "Kelompok 6 A11.4502",
+  lastModifiedBy: "Kelompok 6 A11.4502",
   title: JUDUL,
   features: { updateFields: true },
   styles: L.styles,

@@ -17,10 +17,8 @@ Chain sebagai acuan teori.
 | A11.2024.16004 | Syafiq Yahya | Ketua kelompok, mempresentasikan hasil proyek |
 | A11.2024.15851 | Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii)) | Pengembang aplikasi, pengumpulan dan pengujian data asli |
 | A11.2024.15842 | Gastiadirrijal Rafi M | Penyusun slide presentasi |
-| A11.2024.15826 | Zabrina Miftah Z | Penyusun proposal proyek |
-| A11.2024.15804 | Rayya Hasya Tamimi | Penyusun proposal proyek |
-
-Dibantu oleh Claude (Anthropic) dalam penulisan kode.
+| A11.2024.15826 | Zabrina Miftah Z | Penyusun proposal dan laporan |
+| A11.2024.15804 | Rayya Hasya Tamimi | Penyusun proposal dan laporan |
 
 ## Fitur
 
@@ -106,7 +104,8 @@ Penjelasan lengkap untuk laporan ada di [`docs/LAPORAN.md`](docs/LAPORAN.md).
 ## Menambah data asli
 
 1. Pemain membuka aplikasi → Import Data → ambil riwayat.
-2. Klik **Dataset anonim (.csv)**. File ini tanpa UID, nama item, dan waktu.
+2. Klik **Dataset anonim (.csv)**. File ini tanpa UID, nama item, dan waktu; ID akun
+   diganti kode acak yang tidak bisa dilacak balik ke UID.
 3. Simpan file ke `data/real/`, lalu jalankan `python scripts/train_models.py`.
 4. Commit `data/real/*.csv` dan folder `models/`.
 
@@ -115,3 +114,14 @@ Penjelasan lengkap untuk laporan ada di [`docs/LAPORAN.md`](docs/LAPORAN.md).
 Semua angka ada di `zzzgacha/config.py`: rate, hard pity, soft pity, peluang
 rate-up, dan daftar S standar. Setelah mengubahnya, latih ulang model dengan
 `python scripts/train_models.py` dan jalankan `python -m pytest -q`.
+
+## Lisensi
+
+Kode dirilis dengan [lisensi MIT](LICENSE).
+Copyright (c) 2026–sekarang **Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii))**
+dan anggota Kelompok 6 (lihat tabel [Tim](#tim)).
+
+Nama dan aset *Zenless Zone Zero*, logo Universitas Dian Nuswantoro, dan data
+pemain tidak termasuk lisensi MIT. Rinciannya ada di [`NOTICE.md`](NOTICE.md).
+
+Dikembangkan oleh **Dafi Hauzan A.H** ([@tehgeii](https://github.com/tehgeii)).

@@ -72,10 +72,11 @@ class FakeSession:
         self.data, self.fail_types, self.errors = data, set(fail_types), list(errors or [])
         self.calls = []
 
-    def get(self, url, timeout):
+    def get(self, url, timeout, allow_redirects=True):
         from urllib.parse import parse_qs, urlsplit
 
         assert timeout == fetcher.REQUEST_TIMEOUT
+        assert allow_redirects is False  # URL ber-authkey tidak boleh diteruskan ke host lain
         q = {k: v[0] for k, v in parse_qs(urlsplit(url).query).items()}
         self.calls.append(q)
         if self.errors:
@@ -152,4 +153,10 @@ def test_non_json_response():
 def test_http_error_status():
     session = FakeSession({}, errors=[FakeResponse({}, status=403)])
     with pytest.raises(FetchError, match="403"):
+        fetch_history(GOOD, session=session, sleep=lambda s: None)
+
+
+def test_redirect_is_not_followed():
+    session = FakeSession({}, errors=[FakeResponse({}, status=302)])
+    with pytest.raises(FetchError, match="302"):
         fetch_history(GOOD, session=session, sleep=lambda s: None)
