@@ -2,11 +2,13 @@
 
     python3 figs.py          (dari folder docs/tugas/sumber, butuh matplotlib)
 
-Menghasilkan fig/fig_akurasi.png dan fig/fig_real_cv.png. Jalankan setelah
-scripts/train_models.py, lalu bash build.sh untuk memperbarui docx/pptx.
+Menghasilkan fig/fig_akurasi.png, fig/fig_real_cv.png, dan fig/fig_softpity.png (pola soft pity
+langsung dari data/real). Jalankan setelah scripts/train_models.py, lalu bash build.sh untuk
+memperbarui docx/pptx. Angka tabel pola soft pity ikut dicetak supaya laporan bisa disamakan.
 """
 
 import json
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -15,7 +17,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
-REPORT = HERE.parents[2] / "models" / "report.json"
+ROOT = HERE.parents[2]
+REPORT = ROOT / "models" / "report.json"
 FIG = HERE / "fig"
 
 BASELINE = "Baseline: selalu tebak 'tidak S'"
@@ -86,8 +89,63 @@ def fig_real_cv(task):
     plt.close(fig)
 
 
+# Rentang "pull ke-n sejak S-Rank terakhir" untuk melihat kapan peluang mulai melonjak.
+RANGES = {"agent": [(1, 60), (61, 73), (74, 78), (79, 90)], "wengine": [(1, 55), (56, 64), (65, 80)]}
+
+
+def softpity_table():
+    """Laju S-Rank per rentang pull pada data asli, dibandingkan rata-rata peluang model Markov."""
+    sys.path.insert(0, str(ROOT))
+    from zzzgacha import models as M
+    from zzzgacha import probability as P
+    from zzzgacha.config import BANNERS
+    from zzzgacha.dataset import load_real_dir
+
+    data = M.build_features(load_real_dir(ROOT / "data" / "real"), horizon=1)
+    data = data.assign(n=data["pity"] + 1)  # pull ke-n sejak S-Rank terakhir
+    rows = []
+    for key, ranges in RANGES.items():
+        banner = BANNERS[key]
+        part = data[data["is_wengine"] == int(key == "wengine")]
+        for lo, hi in ranges:
+            x = part[(part["n"] >= lo) & (part["n"] <= hi)]
+            model = sum(P.s_chance_at_pity(banner, int(n)) for n in x["n"]) / len(x)
+            rows.append({"banner": key, "lo": lo, "hi": hi, "pulls": len(x), "s": int(x["is_s"].sum()),
+                         "data": float(x["is_s"].mean()), "model": model, "soft": banner.soft_pity_start})
+    return rows
+
+
+def fig_softpity(rows):
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4.0), dpi=200, gridspec_kw={"width_ratios": [4, 3]})
+    for ax, key, title in ((axes[0], "agent", "Agent"), (axes[1], "wengine", "W-Engine")):
+        r = [row for row in rows if row["banner"] == key]
+        x = range(len(r))
+        data = [row["data"] * 100 for row in r]
+        model = [row["model"] * 100 for row in r]
+        ax.bar(x, data, 0.6, color=ORANGE, label="Data asli")
+        ax.plot(x, model, "D--", color="#222222", markersize=6, linewidth=1, label="Model Markov")
+        for i, row in enumerate(r):
+            top = max(data[i], model[i])
+            ax.text(i, top + 2, f"{data[i]:.1f}%\n({row['s']}/{row['pulls']})", ha="center", va="bottom", fontsize=8)
+        ax.set_xticks(list(x), [f"pull ke-\n{row['lo']}–{row['hi']}" for row in r], fontsize=8)
+        ax.set_title(f"{title} (soft pity estimasi: pull ke-{r[0]['soft']})", fontsize=10)
+        ax.set_ylim(0, 58)
+        style(ax)
+    axes[0].set_ylabel("Laju S-Rank per pull (%)")
+    axes[0].legend(loc="upper left", frameon=False, fontsize=8)
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_softpity.png")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     task = json.loads(REPORT.read_text(encoding="utf-8"))["tasks"]["next_10"]
     fig_akurasi(task)
     fig_real_cv(task)
-    print("selesai:", FIG / "fig_akurasi.png", FIG / "fig_real_cv.png")
+    rows = softpity_table()
+    fig_softpity(rows)
+    print("selesai:", FIG / "fig_akurasi.png", FIG / "fig_real_cv.png", FIG / "fig_softpity.png")
+    print("\nPola soft pity (data asli):")
+    for row in rows:
+        print(f"  {row['banner']:8s} pull ke-{row['lo']}–{row['hi']}: {row['pulls']:4d} pull, {row['s']:2d} S, "
+              f"data {row['data'] * 100:.1f}%, model {row['model'] * 100:.1f}%")

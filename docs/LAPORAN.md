@@ -22,13 +22,33 @@ Proyek ini menjawab pertanyaan itu dengan dua pendekatan:
 2. **Algoritma data mining** yang belajar dari data pull, lalu dibandingkan
    akurasinya.
 
+### 1.1 Kenapa perlu data mining, bukan rumus saja?
+
+*Machine learning* tidak diperlukan kalau (1) ada atribut yang langsung
+menentukan hasil, atau (2) sudah ada pengetahuan/rumus yang pasti dan lengkap.
+Pada gacha ZZZ keduanya **tidak terpenuhi**:
+
+| Kondisi | Pada gacha ZZZ | Terpenuhi? |
+|---|---|---|
+| Ada atribut yang langsung menentukan hasil | Tidak ada. Pity hanya mengubah peluang; hasil tiap pull tetap acak. Kepastian hanya di hard pity. | Tidak |
+| Ada rumus pasti dan lengkap | Hanya sebagian. Rate dasar, rate gabungan, hard pity, dan rate-up resmi, tetapi **soft pity tidak diumumkan** (kapan mulai dan seberapa cepat naik). Perkiraan komunitas pun berbeda-beda. | Tidak |
+
+Bagian yang tidak diumumkan itu hanya bisa diketahui dari **data riwayat
+pemain**. Masalahnya termasuk **klasifikasi + estimasi peluang** (*supervised
+learning*, label: dapat S atau tidak). Markov Chain dipakai sebagai pembanding
+teori, sedangkan algoritma **tidak diberi tahu** soft pity dan diuji apakah bisa
+menemukannya sendiri (hasilnya: bisa, lihat bagian "Pola soft pity pada data asli").
+
 ## 2. Rumusan masalah
 
 1. Berapa peluang pemain mendapatkan S / S rate-up dalam N pull, dilihat dari
    pity dan status guaranteed-nya?
-2. Dari Naive Bayes, KNN, Logistic Regression, Decision Tree, Random Forest, dan XGBoost,
+2. Apakah pola soft pity yang tidak diumumkan resmi dapat ditemukan dari data
+   riwayat gacha pemain?
+3. Dari Naive Bayes, KNN, Logistic Regression, Decision Tree, Random Forest, dan XGBoost,
    algoritma mana yang paling akurat memprediksi keluarnya S?
-3. Apakah algoritma data mining mampu "menemukan" mekanisme soft pity dari data?
+4. Bagaimana mengevaluasi model secara tepat pada data yang sangat tidak seimbang?
+5. Bagaimana menyajikannya dalam aplikasi web yang nyaman di HP maupun PC?
 
 ## 3. Aturan banner
 
@@ -69,7 +89,7 @@ State = (pity, guaranteed). Dari setiap state:
 - selain itu → state (pity+1, guaranteed sama)
 
 Distribusi peluang di tiap state dihitung maju pull demi pull, sehingga
-diperoleh peluang **eksak** (bukan perkiraan simulasi) untuk "dapat S rate-up
+diperoleh peluang yang **eksak terhadap model** (bukan perkiraan simulasi; soft pity tetap estimasi) untuk "dapat S rate-up
 dalam N pull". Hasilnya diverifikasi dengan simulasi Monte Carlo 400.000 pull
 (lihat `tests/test_probability.py`).
 
@@ -119,7 +139,7 @@ Dua tugas klasifikasi biner:
 | Random Forest | 150 pohon, max_depth 8 | ensemble bagging, lebih stabil dari satu pohon |
 | XGBoost | 300 pohon, max_depth 4, learning rate 0,05 | ensemble boosting, umumnya kuat di data tabular |
 | *Baseline: selalu tebak "tidak S"* | DummyClassifier | membuktikan jebakan akurasi |
-| *Markov Chain (teori)* | rumus 4.1 | batas atas: peluang sebenarnya |
+| *Markov Chain (teori)* | rumus 4.1 | acuan teori; di data simulasi menjadi batas atas karena data dibangkitkan dari rumus yang sama |
 
 ### 4.6 Evaluasi
 
@@ -132,6 +152,13 @@ Dua tugas klasifikasi biner:
   - **Precision / Recall / F1**: kualitas tebakan pada kelas "dapat S";
   - **ROC-AUC**: kemampuan membedakan kelas di semua threshold;
   - **Log Loss** dan **Brier Score**: seberapa tepat *angka peluang* yang dihasilkan.
+- Prediksi kelas memakai ambang peluang 0,5. **Tidak memakai oversampling**
+  (mis. SMOTE): yang dicari adalah angka peluang yang tepat, dan data buatan untuk
+  kelas minoritas akan menggeser peluang itu. Ketidakseimbangan ditangani lewat
+  pilihan metrik.
+- **Analisis pola soft pity:** laju S per rentang pull di data asli dibandingkan
+  dengan peluang model Markov, dan aturan Decision Tree yang dilatih hanya dengan
+  data asli diperiksa.
 
 ## 5. Hasil (cross-validation 5-fold, rata-rata)
 
@@ -199,10 +226,38 @@ awal setelah dapat S.
 | Random Forest | 0,9299 ± 0,0264 | 0,7696 | 0,6720 | **0,9258** | **0,2321** |
 | XGBoost | 0,9222 ± 0,0348 | 0,7678 | 0,6370 | 0,9257 | 0,2495 |
 
-- Decision Tree tetap tertinggi, urutan model pohon sama seperti di simulasi.
+- Tiga model pohon tetap teratas. Selisihnya (paling besar 0,88 poin) lebih kecil
+  daripada simpangan bakunya (±2,6–3,5%), jadi ketiganya **setara**.
 - Naive Bayes akurasinya rendah tetapi Balanced Accuracy tertinggi (recall ±0,76).
 - KNN turun hampir ke baseline karena k = 101 terlalu besar untuk ±970 baris latih.
 - Simpangan baku ±2–4% (simulasi ±0,2%) karena datanya jauh lebih sedikit.
+
+### Pola soft pity pada data asli
+
+Laju S per pull di data asli (Tugas A, 1.245 baris) per rentang "pull ke-n sejak
+S terakhir", dibandingkan rata-rata peluang model Markov (dibuat ulang dengan
+`docs/tugas/sumber/figs.py`):
+
+| Banner | Pull ke- | Jumlah pull | S | Laju data asli | Model Markov |
+|---|---|---|---|---|---|
+| Agent | 1–60 | 788 | 4 | 0,5% | 0,6% |
+| Agent | 61–73 | 107 | 1 | 0,9% | 0,6% |
+| Agent | 74–78 | 35 | 5 | **14,3%** | 15,3% |
+| Agent | 79–90 | 8 | 3 | **37,5%** | 39,7% |
+| W-Engine | 1–55 | 260 | 1 | 0,4% | 1,0% |
+| W-Engine | 56–64 | 36 | 0 | 0,0% | 1,0% |
+| W-Engine | 65–80 | 11 | 4 | **36,4%** | 12,0% |
+
+- **Agent:** hampir nol sampai pull ke-73, lalu melonjak mulai pull ke-74,
+  sangat dekat dengan model (estimasi soft pity pull ke-74).
+- **W-Engine:** tidak ada S antara pull ke-21 dan ke-65, lalu 4 dari 11 pull
+  setelahnya dapat S (36,4%), lebih tinggi dari model (12,0%). Mungkin peluang
+  W-Engine naik lebih cepat dari asumsi, tetapi datanya masih terlalu sedikit.
+- Decision Tree yang dilatih **hanya dengan data asli** (Tugas B) memisah pertama
+  kali di `pity_ratio <= 0,735` (pity ±66 Agent, ±59 W-Engine), sekitar 8–10 pull
+  sebelum soft pity, sama seperti pohon yang dilatih di simulasi (0,71–0,74).
+
+Jadi lonjakan peluang yang tidak diumumkan resmi **bisa ditemukan dari data asli**.
 
 ## 6. Pembahasan
 
@@ -215,6 +270,8 @@ awal setelah dapat S.
    perbedaan antar-algoritma terlihat jelas: model berbasis pohon (Decision
    Tree, Random Forest, XGBoost) dan KNN mencapai akurasi ±91,1%, di atas
    Logistic Regression (±88,9%), Naive Bayes (±85,7%), dan baseline (±83,4%).
+   Keempat model teratas **setara**: selisihnya ±0,0001, jauh lebih kecil dari
+   simpangan baku cross-validation (±0,002).
 3. **Model pohon menemukan soft pity sendiri.** Pada Tugas B, aturan Decision
    Tree memisahkan data di sekitar `pity_ratio ≈ 0,71–0,74` (pity ±64 untuk
    Agent, ±57 untuk W-Engine). Titik ini kira-kira 10 pull sebelum soft pity,
@@ -236,41 +293,56 @@ awal setelah dapat S.
    keluar, bukan *kapan* S keluar.
 7. **Terbukti di data asli.** Urutan hasil di data 2 akun asli sama dengan
    di simulasi: KNN ±93,5% dan model pohon ±93,3%, Logistic Regression ±91,1%,
-   Naive Bayes ±87,5%, baseline ±86,6%, dan Markov (teori) ±93,5%. Artinya asumsi soft pity yang dipakai
-   simulasi cocok dengan perilaku gacha sungguhan. Selain itu, pity dan status
+   Naive Bayes ±87,5%, baseline ±86,6%, dan Markov (teori) ±93,5%. Akurasinya
+   lebih tinggi daripada simulasi karena kelas positif di data asli lebih sedikit
+   (13,4% vs 16,6%), sehingga baseline juga naik (86,6% vs 83,4%); keunggulan di
+   atas baseline sama-sama ±7 poin. Artinya asumsi soft pity yang dipakai simulasi
+   tidak bertentangan dengan perilaku gacha sungguhan (dengan catatan data asli
+   baru 2 akun). Selain itu, pity dan status
    guaranteed yang dihitung aplikasi untuk akun asli **sama persis** dengan
    yang tampil di game.
 8. **Tidak bergantung pada simulasi.** Saat dilatih dan diuji hanya dengan
    data asli (1.209 baris), Decision Tree (93,10%), Random Forest (92,99%), dan
-   XGBoost (92,22%) tetap terbaik. KNN turun (87,42%) karena k = 101 terlalu
+   XGBoost (92,22%) tetap terbaik dan setara satu sama lain. KNN turun (87,42%) karena k = 101 terlalu
    besar untuk data kecil: hyperparameter harus disesuaikan dengan ukuran data.
 9. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
    (teori), karena hasil gacha memang acak. Model terbaik adalah yang paling
    mendekati peluang sebenarnya.
+10. **Nilai tambah data mining.** Rumus resmi tidak memuat soft pity, sedangkan
+    algoritma yang hanya diberi data mampu mendekati acuan teori dan menemukan
+    titik lonjakannya sendiri. Ini yang tidak didapat dari rumus resmi saja.
 
 ## 7. Keterbatasan
 
 - Titik mulai soft pity adalah estimasi komunitas, bukan angka resmi.
 - Data latih utama berasal dari simulasi berdasarkan model 4.1, sehingga model
   ML "belajar ulang" asumsi tersebut. Data asli pemain dipakai untuk menguji
-  apakah asumsi itu cocok dengan kenyataan, dan hasilnya cocok.
-- Data asli baru 2 akun (18 S pada Tugas A), sehingga angka uji data asli
-  masih bisa bergeser kalau datanya ditambah (simpangan baku eksperimen latih
-  di data asli ±2–4%). Makin banyak akun, makin kuat
+  apakah asumsi itu cocok dengan kenyataan, dan hasilnya tidak bertentangan.
+- Data asli baru 2 akun (18 S pada Tugas A, 20 siklus pity). Baris dalam satu
+  siklus saling berkaitan, jadi informasinya lebih sedikit daripada jumlah baris,
+  dan angka uji data asli masih bisa bergeser kalau datanya ditambah (simpangan
+  baku eksperimen latih di data asli ±2–4%). Makin banyak akun, makin kuat
   kesimpulannya.
+- Hyperparameter dipilih manual (tanpa grid search), dan perbedaan antar-model
+  belum diuji signifikansinya secara statistik.
 - Penentuan menang/kalah 50/50 memakai daftar S standar di `config.py`. Daftar
   ini harus diperbarui kalau HoYoverse menambah isi banner standar.
 - Riwayat resmi hanya tersimpan beberapa bulan terakhir.
 
 ## 8. Kesimpulan (draf)
 
-- Sistem pity ZZZ dapat dimodelkan secara eksak dengan Markov Chain; aplikasi
-  memakainya untuk menghitung peluang dapat S/S rate-up dalam N pull.
+- Sistem pity ZZZ dapat dimodelkan dengan Markov Chain; aplikasi memakainya untuk
+  menghitung peluang dapat S/S rate-up dalam N pull (titik soft pity masih estimasi).
+- Pola soft pity yang tidak diumumkan resmi **dapat ditemukan dari data asli**:
+  laju S Agent melonjak mulai pull ke-74 dan W-Engine sekitar pull ke-65, dan
+  Decision Tree yang dilatih hanya dengan data asli menemukan titik pemisah yang
+  sesuai tanpa diberi tahu.
 - Untuk memprediksi keluarnya S, **Decision Tree, Random Forest, XGBoost, dan
   KNN** memberikan akurasi tertinggi (±91,1% pada tugas 10 pull di simulasi,
   ±93,3–93,5% di data asli) dan hampir sama dengan batas teoretis, sedangkan
   Naive Bayes dan Logistic Regression paling rendah. Saat dilatih dan diuji
-  hanya dengan data asli (1.209 baris), Decision Tree tetap tertinggi (93,10%).
+  hanya dengan data asli (1.209 baris), Decision Tree tertinggi (93,10%), setara
+  dengan Random Forest dan XGBoost.
 - **Accuracy tidak cukup** untuk data tidak seimbang; perlu metrik pendukung
   seperti Balanced Accuracy, F1, ROC-AUC, dan Log Loss.
 

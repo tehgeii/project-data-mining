@@ -7,9 +7,9 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 | File | Untuk | Keterangan |
 |---|---|---|
 | `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal Proyek Akhir (Bab I–III, jadwal, pustaka) |
-| `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 17 slide + catatan pembicara (±20 menit) |
+| `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 18 slide + catatan pembicara (±25 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
-| `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 22 slide + catatan pembicara (±30 menit) |
+| `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 24 slide + catatan pembicara (±35 menit) |
 | `sumber/` | (tidak dikumpulkan) | Kode pembuat keempat file di atas. Lihat `sumber/README.md` |
 
 > Proposal UTS sudah memuat "Hasil Awal (Prototipe)" karena aplikasinya sudah jadi.
@@ -54,13 +54,13 @@ Catatan pembicara untuk setiap slide sudah ada di file `.pptx`
 | Bagian | Slide UTS | Slide UAS | Durasi |
 |---|---|---|---|
 | Pembukaan & tim | 1–2 | 1–2 | 2 menit |
-| Latar belakang, masalah, batasan, tujuan | 3–5 | 3–4 | 4 menit |
-| Aturan banner & landasan teori | 6–9 | 5–8 | 6 menit |
-| Metodologi & data | 10–13 | 9–11 | 5 menit |
-| Aplikasi (demo langsung) | 14 | 12–13 | 3 menit |
-| Hasil & pembahasan | 15 | 14–20 | 2 (UTS) / 10 (UAS) menit |
-| Jadwal / kesimpulan & penutup | 16–17 | 21–22 | 2 menit |
-| **Total** | | | **±24 menit (UTS) / ±32 menit (UAS)** |
+| Latar belakang, alasan memakai data mining, masalah (UTS: + batasan & tujuan) | 3–6 | 3–5 | 5 menit |
+| Aturan banner & landasan teori | 7–10 | 6–9 | 6 menit |
+| Metodologi & data | 11–14 | 10–12 | 5 menit |
+| Aplikasi (demo langsung) | 15 | 13–14 | 3 menit |
+| Hasil & pembahasan (UAS: termasuk pola soft pity di data asli) | 16 | 15–22 | 2 (UTS) / 12 (UAS) menit |
+| Jadwal / kesimpulan & penutup | 17–18 | 23–24 | 2 menit |
+| **Total** | | | **±25 menit (UTS) / ±35 menit (UAS)** |
 
 Tips rekaman:
 - Rekam layar dengan OBS Studio (gratis) atau Zoom (record to computer), kamera di pojok.
@@ -71,10 +71,60 @@ Tips rekaman:
 
 ## Pertanyaan yang mungkin ditanyakan dosen (dan jawabannya)
 
+Pertanyaan yang paling mungkin menjebak ditaruh paling atas.
+
+**Kalau peluangnya sudah ada rumusnya, kenapa perlu machine learning?**
+Rumus resminya tidak lengkap. HoYoverse hanya mengumumkan rate dasar, rate gabungan, hard pity,
+dan peluang rate-up; **soft pity tidak diumumkan** (kapan mulai dan seberapa cepat peluang naik),
+dan perkiraan komunitas pun berbeda-beda. Pola itu hanya bisa digali dari data riwayat pemain.
+Buktinya: di data asli, laju S Agent hampir nol sampai pull ke-73 lalu melonjak jadi 14% mulai
+pull ke-74, dan Decision Tree yang dilatih **hanya dengan data asli** memisahkan data di pity ±66
+tanpa pernah diberi tahu soal soft pity. Masalah ini termasuk klasifikasi + estimasi peluang
+(supervised learning, label: dapat S atau tidak).
+
+**Data latihnya kan simulasi dari rumus kalian sendiri? Berarti model cuma belajar ulang rumus?**
+Benar, dan itu ditulis terbuka di bagian keterbatasan. Karena itu ada dua hal yang memakai data
+asli saja: (1) keenam algoritma dilatih dan diuji hanya dengan data asli (1.209 baris), dan
+(2) pola soft pity dihitung langsung dari data asli. Hasil keduanya konsisten dengan model.
+
+**Kenapa akurasi di data asli (±93%) lebih tinggi daripada di simulasi (±91%)?**
+Kelas positif di data asli lebih sedikit (13,4% vs 16,6%), jadi lebih mudah ditebak. Baseline-nya
+juga naik (86,6% vs 83,4%). Kalau dibandingkan dengan baseline, keunggulan model terbaik sama-sama
+sekitar 7 poin. Akurasi dari dua data yang proporsi kelasnya berbeda tidak bisa dibandingkan langsung.
+
+**Jadi Decision Tree yang paling bagus?**
+Angkanya memang tertinggi, tetapi selisihnya dengan Random Forest dan XGBoost lebih kecil daripada
+simpangan bakunya (±3% di data asli, ±0,2% di simulasi), jadi ketiganya **setara**. Jangan bilang
+Decision Tree "jauh lebih baik". Kelebihan Decision Tree: aturannya paling mudah dibaca.
+
+**Kenapa tidak memakai SMOTE atau oversampling untuk data tidak seimbang?**
+Yang dicari adalah angka peluang yang tepat. Menambah data buatan kelas minoritas akan menggeser
+peluang tersebut (model jadi terlalu optimis). Ketidakseimbangan kami tangani dengan memilih
+metrik yang tepat: Balanced Accuracy, F1, ROC-AUC, Log Loss, dan Brier Score.
+
+**Datanya cuma 2 akun, cukup?**
+Jumlah barisnya sudah memenuhi syarat (1.441 pull, 1.209 baris setelah dibersihkan), tetapi
+isinya baru 22 S-Rank dan 20 siklus pity, dan baris dalam satu siklus saling berkaitan. Karena
+itu simpangan bakunya masih ±2–4%. Ini keterbatasan yang kami tulis; solusinya menambah akun.
+
+**Hyperparameter-nya dipilih bagaimana?**
+Secara manual, disesuaikan dengan data simulasi yang besar. Itu sebabnya KNN (k = 101) turun di
+data asli yang kecil. Saran pengembangannya adalah grid search.
+
+**Apakah aplikasi ini bisa meramal kapan dapat S? Apakah tidak mendorong orang berjudi?**
+Tidak meramal hasil, karena setiap pull tetap acak; aplikasi hanya memperkirakan **peluang**.
+Justru membantu pemain merencanakan pengeluaran secara realistis, misalnya mengetahui rata-rata
+dan kemungkinan terburuk jumlah pull sebelum menghabiskan mata uang permainan.
+
+**`pity_ratio` kan turunan dari `pity`, kenapa dipakai dua-duanya?**
+`pity_ratio` membuat dua banner sebanding (hard pity 90 vs 80). Model pohon cukup memilih salah
+satu. Untuk Naive Bayes, dua fitur yang saling berkaitan memang melanggar asumsi "saling bebas",
+dan itu salah satu alasan Naive Bayes paling rendah.
+
 **Datasetnya berapa baris? (syarat: tabel minimal 500–1.000 baris)**
 Data asli 1.441 pull (±1.200 baris setelah dibersihkan) dari 2 akun, ditambah data simulasi
 ±314.000 baris. Keenam algoritma juga sudah dilatih dan diuji **hanya dengan data asli**
-(1.209 baris, 5-fold per siklus pity): Decision Tree tetap tertinggi (±93,1%).
+(1.209 baris, 5-fold per siklus pity): Decision Tree tertinggi (±93,1%), setara Random Forest dan XGBoost.
 
 **Kenapa KNN turun saat dilatih dengan data asli saja?**
 Nilai k = 101 tetangga terlalu besar untuk data latih ±970 baris yang hanya berisi ±130 kelas
@@ -83,7 +133,8 @@ harus disesuaikan dengan ukuran data.
 
 **Kenapa memakai data simulasi?**
 Satu akun asli hanya punya ratusan pull dan beberapa S-Rank, terlalu sedikit untuk melatih.
-Simulasi dibangkitkan dari aturan resmi, lalu model diuji di data asli dan hasilnya konsisten.
+Simulasi dibangkitkan dari aturan resmi ditambah estimasi soft pity, lalu model diuji di data asli
+dan hasilnya konsisten. Lihat juga pertanyaan "data latihnya kan simulasi" di atas.
 
 **Kenapa akurasinya sama semua di tugas A?**
 S-Rank hanya ±1,7%, sehingga tebakan "selalu tidak S" pun benar 98%. Ini contoh jebakan akurasi

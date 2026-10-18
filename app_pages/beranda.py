@@ -45,8 +45,9 @@ st.caption(
 with st.expander("Metode yang dipakai"):
     st.markdown(
         """
-- **Markov Chain**: model matematis sistem pity. Menghasilkan peluang *eksak*
-  (misalnya peluang dapat S rate-up dalam 50 pull dari pity 30).
+- **Markov Chain**: model matematis sistem pity. Peluangnya dihitung langsung dari aturan
+  banner, tanpa simulasi (misalnya peluang dapat S rate-up dalam 50 pull dari pity 30).
+  Titik soft pity tidak diumumkan resmi, jadi memakai estimasi yang diperiksa dengan data asli.
 - **Naive Bayes, KNN, Logistic Regression, Decision Tree, Random Forest, XGBoost**: algoritma
   klasifikasi yang *belajar dari data* pull untuk menebak apakah S akan keluar.
 - Semua model dibandingkan dengan **Accuracy**, **Balanced Accuracy**,

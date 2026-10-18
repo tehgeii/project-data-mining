@@ -27,7 +27,7 @@ Dibantu oleh Claude (Anthropic) dalam penulisan kode.
 | Halaman | Isi |
 |---|---|
 | 📥 Import Data | 3 cara: **URL dari PowerShell** (PC), **upload file UIGF** (HP/PC), **input manual** (HP). Ada juga **data contoh** untuk yang tidak punya game. |
-| 🎲 Kalkulator Peluang | Peluang dapat S / S rate-up dalam N pull (Markov Chain, hasil eksak), konversi Polychrome, dan prediksi dari 6 model ML. |
+| 🎲 Kalkulator Peluang | Peluang dapat S / S rate-up dalam N pull (Markov Chain, dihitung tanpa simulasi), konversi Polychrome, dan prediksi dari 6 model ML. |
 | 📊 Statistik Riwayat | Pity tiap S, rata-rata pity, menang/kalah 50/50, pity sekarang. |
 | 🤖 Perbandingan Algoritma | Tabel Accuracy, Balanced Accuracy, Precision, Recall, F1, ROC-AUC, Log Loss, Brier; cross-validation; kurva peluang; confusion matrix; feature importance. |
 | 📖 Panduan & FAQ | Cara menjalankan script PowerShell dan menjawab pertanyaan umum. |
@@ -65,7 +65,7 @@ streamlit_app.py          # titik masuk aplikasi + navigasi
 app_pages/                # satu file per halaman
 zzzgacha/
   config.py               # aturan banner (rate, pity, 50/50, daftar S standar)
-  probability.py          # Markov Chain: peluang eksak
+  probability.py          # Markov Chain: peluang dari aturan banner
   records.py              # olah riwayat: pity, status guaranteed, 50/50
   importers.py            # baca/tulis UIGF v4, dataset anonim
   fetcher.py              # ambil riwayat dari API resmi (aman, host dibatasi)
@@ -84,6 +84,10 @@ docs/                     # bahan laporan; docs/tugas = file UTS/UAS + kodenya (
 
 ## Metodologi singkat
 
+- **Kenapa perlu data mining:** HoYoverse tidak mengumumkan soft pity (kapan
+  peluang mulai naik dan seberapa cepat), jadi polanya harus digali dari data.
+  Di data asli, laju S Agent melonjak mulai pull ke-74, dan Decision Tree yang
+  dilatih hanya dengan data asli menemukan titik itu sendiri.
 - **Dua tugas klasifikasi** dengan fitur yang diketahui *sebelum* pull
   (`pity`, `pity_ratio`, `guaranteed`, `is_wengine`):
   1. `next_pull`: apakah pull berikutnya S?
