@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 import time
 from collections.abc import Callable
-from urllib.parse import parse_qsl, urlencode, urlsplit
+from urllib.parse import parse_qsl, unquote, urlencode, urlsplit
 
 import requests
 
@@ -30,8 +30,10 @@ MAX_PAGES_PER_TYPE = 1500  # 30.000 pull per banner, jauh di atas wajar
 REQUEST_TIMEOUT = 15
 MAX_RETRIES = 3
 
-# Parameter yang diatur ulang oleh fetcher (tidak diambil dari URL pengguna).
-_OVERRIDDEN = {"real_gacha_type", "gacha_type", "end_id", "size", "page", "lang"}
+# Parameter yang diatur ulang oleh fetcher (tidak diambil dari URL pengguna). Parameter
+# lain, termasuk authkey dan gacha_type, dikirim persis seperti di URL dari game (sama
+# seperti alat ekspor gacha lain), karena decode lalu encode ulang bisa mengubah nilainya.
+_OVERRIDDEN = {"real_gacha_type", "end_id", "size", "page", "lang"}
 
 _URL_RE = re.compile(r"https://[^\s\"'<>]+")
 
@@ -40,8 +42,10 @@ class FetchError(RuntimeError):
     """Kesalahan saat mengambil data (pesan aman ditampilkan ke pengguna)."""
 
 
-def parse_gacha_url(text: str) -> tuple[str, dict[str, str]]:
-    """Validasi URL yang ditempel pengguna dan kembalikan (host API, parameter).
+def parse_gacha_url(text: str) -> tuple[str, str]:
+    """Validasi URL yang ditempel pengguna dan kembalikan (host API, query asli).
+
+    Query dikembalikan apa adanya, tanpa parameter di ``_OVERRIDDEN``.
 
     Menerima URL API (``.../getGachaLog?authkey=...``) maupun URL halaman
     riwayat di dalam game (``...?authkey=...#/...``).
@@ -66,7 +70,8 @@ def parse_gacha_url(text: str) -> tuple[str, dict[str, str]]:
     query = parts.query
     if not query and "?" in parts.fragment:
         query = parts.fragment.split("?", 1)[1]
-    params = dict(parse_qsl(query, keep_blank_values=True))
+    # authkey berupa base64: '+' mentah harus tetap '+', bukan dibaca sebagai spasi.
+    params = dict(parse_qsl(query.replace("+", "%2B"), keep_blank_values=True))
     if not params.get("authkey"):
         raise FetchError("URL tidak berisi authkey. Buka lagi riwayat Signal Search di game.")
 
@@ -74,21 +79,21 @@ def parse_gacha_url(text: str) -> tuple[str, dict[str, str]]:
     if game_biz and not game_biz.startswith("nap_"):
         raise FetchError("URL ini bukan milik Zenless Zone Zero.")
     api_host = API_HOST_CN if game_biz == "nap_cn" or host.endswith("mihoyo.com") else API_HOST_GLOBAL
-    clean = {k: v for k, v in params.items() if k not in _OVERRIDDEN}
-    return api_host, clean
+    kept = [part for part in query.split("&") if part and unquote(part.split("=", 1)[0]) not in _OVERRIDDEN]
+    return api_host, "&".join(kept)
 
 
-def build_api_url(api_host: str, params: dict[str, str], real_gacha_type: int, end_id: str) -> str:
+def build_api_url(api_host: str, base_query: str, real_gacha_type: int, end_id: str) -> str:
     if api_host not in ALLOWED_API_HOSTS:
         raise FetchError("Host API tidak diizinkan.")
-    query = {
-        **params,
+    ours = urlencode({
         "real_gacha_type": str(real_gacha_type),
         "size": str(PAGE_SIZE),
         "end_id": end_id,
         "lang": "en-us",
-    }
-    return f"https://{api_host}{API_PATH}?{urlencode(query)}"
+    })
+    query = f"{base_query}&{ours}" if base_query else ours
+    return f"https://{api_host}{API_PATH}?{query}"
 
 
 def _get_json(session: requests.Session, url: str, sleep: Callable[[float], None]) -> dict:
@@ -113,6 +118,14 @@ def _get_json(session: requests.Session, url: str, sleep: Callable[[float], None
     raise FetchError(f"Gagal menghubungi server HoYoverse ({last_error}). Coba lagi nanti.")
 
 
+def _server_message(payload: dict) -> str:
+    """Alasan singkat dari server (tidak memuat authkey), untuk membantu mencari penyebab."""
+    message = payload.get("message")
+    if not isinstance(message, str):
+        return ""
+    return re.sub(r"https?://\S+", "[URL]", message).strip()[:120]
+
+
 def _check_retcode(payload: dict) -> list[dict]:
     if not isinstance(payload, dict):
         raise FetchError("Respons server tidak dikenali.")
@@ -124,7 +137,12 @@ def _check_retcode(payload: dict) -> list[dict]:
     if retcode == -110:
         raise FetchError("Terlalu sering meminta data. Tunggu sebentar lalu coba lagi.")
     if retcode != 0:
-        raise FetchError(f"Server menolak permintaan (retcode {retcode}).")
+        detail = _server_message(payload)
+        raise FetchError(
+            f"Server menolak permintaan (retcode {retcode}{': ' + detail if detail else ''}). "
+            "Buka lagi Signal Search → History di game, jalankan ulang script, lalu tempel URL yang baru. "
+            "Kalau tetap gagal, pakai tab Upload File atau Input Manual."
+        )
     data = payload.get("data") or {}
     items = data.get("list")
     if items is None:
@@ -142,7 +160,7 @@ def fetch_history(
     page_delay: float = 0.3,
 ) -> list[dict]:
     """Ambil seluruh riwayat banner Agent & W-Engine terbatas."""
-    api_host, params = parse_gacha_url(url_text)
+    api_host, base_query = parse_gacha_url(url_text)
     session = session or requests.Session()
     progress = progress or (lambda _msg: None)
     items: list[dict] = []
@@ -150,7 +168,7 @@ def fetch_history(
         for index, real_type in enumerate(banner.real_gacha_types):
             is_main = index == 0
             try:
-                items.extend(_fetch_type(session, api_host, params, real_type, banner.label, progress, sleep, page_delay))
+                items.extend(_fetch_type(session, api_host, base_query, real_type, banner.label, progress, sleep, page_delay))
             except FetchError as exc:
                 # Banner rerun (Rescreening/Reverberation) tidak ada di semua
                 # server/versi. Kalau gagal, lewati saja; banner utama wajib berhasil.
@@ -160,12 +178,12 @@ def fetch_history(
     return items
 
 
-def _fetch_type(session, api_host, params, real_type, label, progress, sleep, page_delay) -> list[dict]:
+def _fetch_type(session, api_host, base_query, real_type, label, progress, sleep, page_delay) -> list[dict]:
     end_id = "0"
     items: list[dict] = []
     for page in range(1, MAX_PAGES_PER_TYPE + 1):
         progress(f"{label}: halaman {page} ({len(items)} pull)")
-        payload = _get_json(session, build_api_url(api_host, params, real_type, end_id), sleep)
+        payload = _get_json(session, build_api_url(api_host, base_query, real_type, end_id), sleep)
         batch = _check_retcode(payload)
         if not batch:
             return items

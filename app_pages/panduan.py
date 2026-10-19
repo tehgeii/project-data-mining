@@ -64,6 +64,18 @@ with st.expander("Apakah aman? Bisa kena ban?"):
     )
 with st.expander("Muncul 'authkey sudah kedaluwarsa'"):
     st.write("Buka lagi Signal Search → History di game, lalu jalankan ulang script untuk mendapatkan URL baru.")
+with st.expander("Muncul 'Server menolak permintaan (retcode ...)'"):
+    st.markdown(
+        """
+1. Di game, buka **Signal Search → History** sampai riwayatnya tampil, lalu **tutup game**.
+2. Jalankan ulang script dan tempel URL yang baru (jangan URL lama).
+3. Pastikan URL ditempel utuh dalam satu baris. Kalau disalin manual dari jendela PowerShell,
+   URL yang terpotong ke beberapa baris bisa rusak.
+4. Kalau tetap gagal, pakai tab **Upload File** (berkas UIGF dari aplikasi ekspor gacha lain)
+   atau **Input Manual**. Teks setelah "retcode" adalah alasan dari server; kirimkan ke pengembang
+   aplikasi bila perlu (aman, tidak berisi authkey).
+"""
+    )
 with st.expander("Bisa untuk ZZZ versi Steam, HoYoPlay, atau Epic Games?"):
     st.markdown(
         """

@@ -6,25 +6,35 @@ from zzzgacha.fetcher import FetchError, build_api_url, fetch_history, parse_gac
 
 GOOD = (
     "https://public-operation-nap-sg.hoyoverse.com/common/gacha_record/api/getGachaLog"
-    "?authkey_ver=1&sign_type=2&authkey=SECRET%2Bkey&game_biz=nap_global&lang=id-id&real_gacha_type=1&end_id=5"
+    "?authkey_ver=1&sign_type=2&authkey=SECRET%2Bkey&game_biz=nap_global&lang=id-id"
+    "&gacha_type=2001&real_gacha_type=1&end_id=5"
 )
 
 
 def test_parse_valid_url_and_overrides():
-    host, params = parse_gacha_url("salin ini: " + GOOD + "  ")
+    host, query = parse_gacha_url("salin ini: " + GOOD + "  ")
     assert host == fetcher.API_HOST_GLOBAL
-    assert params["authkey"] == "SECRET+key"
-    assert "real_gacha_type" not in params and "end_id" not in params and "lang" not in params
-    url = build_api_url(host, params, 2, "0")
+    assert query == "authkey_ver=1&sign_type=2&authkey=SECRET%2Bkey&game_biz=nap_global&gacha_type=2001"
+    url = build_api_url(host, query, 2, "0")
     assert "real_gacha_type=2" in url and "lang=en-us" in url and "size=20" in url
+    assert url.count("real_gacha_type=") == 1 and url.count("lang=") == 1
     assert url.startswith("https://public-operation-nap-sg.hoyoverse.com/common/gacha_record/api/getGachaLog?")
 
 
+def test_raw_authkey_is_sent_unchanged():
+    # authkey base64 yang tidak di-encode: '+' tidak boleh berubah jadi spasi
+    host, query = parse_gacha_url(
+        "https://public-operation-nap-sg.hoyoverse.com/common/gacha_record/api/getGachaLog"
+        "?authkey=ab+cd/ef==&game_biz=nap_global"
+    )
+    assert "authkey=ab+cd/ef==&" in build_api_url(host, query, 2, "0")
+
+
 def test_webview_url_with_fragment():
-    host, params = parse_gacha_url(
+    host, query = parse_gacha_url(
         "https://gs.hoyoverse.com/nap/event/e20230424gacha/index.html#/log?authkey=abc&game_biz=nap_global"
     )
-    assert host == fetcher.API_HOST_GLOBAL and params["authkey"] == "abc"
+    assert host == fetcher.API_HOST_GLOBAL and query == "authkey=abc&game_biz=nap_global"
 
 
 def test_cn_server():
@@ -52,7 +62,7 @@ def test_rejected_urls(text):
 
 def test_disallowed_api_host():
     with pytest.raises(FetchError):
-        build_api_url("evil.com", {}, 2, "0")
+        build_api_url("evil.com", "", 2, "0")
 
 
 class FakeResponse:
@@ -126,6 +136,14 @@ def test_retcode_messages(retcode, msg):
     session = FakeSession({}, errors=[FakeResponse({"retcode": retcode})])
     with pytest.raises(FetchError, match=msg):
         fetch_history(GOOD, session=session, sleep=lambda s: None)
+
+
+def test_unknown_retcode_shows_server_reason():
+    reply = {"retcode": -1, "message": "system error, see https://example.com/x?authkey=a"}
+    session = FakeSession({}, errors=[FakeResponse(reply)])
+    with pytest.raises(FetchError, match=r"retcode -1: system error") as info:
+        fetch_history(GOOD, session=session, sleep=lambda s: None)
+    assert "authkey" not in str(info.value) and "Upload File" in str(info.value)
 
 
 def test_retries_network_errors_and_hides_url():
