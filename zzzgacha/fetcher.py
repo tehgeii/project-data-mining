@@ -29,6 +29,7 @@ PAGE_SIZE = 20
 MAX_PAGES_PER_TYPE = 1500  # 30.000 pull per banner, jauh di atas wajar
 REQUEST_TIMEOUT = 15
 MAX_RETRIES = 3
+MAX_URLS = 10  # script bisa menyalin beberapa URL dari cache; dicoba satu per satu
 
 # Parameter yang diatur ulang oleh fetcher (tidak diambil dari URL pengguna). Parameter
 # lain, termasuk authkey dan gacha_type, dikirim persis seperti di URL dari game (sama
@@ -37,9 +38,23 @@ _OVERRIDDEN = {"real_gacha_type", "end_id", "size", "page", "lang"}
 
 _URL_RE = re.compile(r"https://[^\s\"'<>]+")
 
+_EXPIRED_HINT = (
+    "Buka lagi Signal Search → History di game sampai riwayatnya tampil, tutup game, jalankan script "
+    "versi terbaru (download ulang di halaman Panduan), lalu tempel URL yang baru."
+)
+
 
 class FetchError(RuntimeError):
     """Kesalahan saat mengambil data (pesan aman ditampilkan ke pengguna)."""
+
+
+class AuthkeyExpired(FetchError):
+    """authkey di URL sudah kedaluwarsa (URL lama dari cache)."""
+
+
+def _query_params(query: str) -> dict[str, str]:
+    # authkey berupa base64: '+' mentah harus tetap '+', bukan dibaca sebagai spasi.
+    return dict(parse_qsl(query.replace("+", "%2B"), keep_blank_values=True))
 
 
 def parse_gacha_url(text: str) -> tuple[str, str]:
@@ -70,8 +85,7 @@ def parse_gacha_url(text: str) -> tuple[str, str]:
     query = parts.query
     if not query and "?" in parts.fragment:
         query = parts.fragment.split("?", 1)[1]
-    # authkey berupa base64: '+' mentah harus tetap '+', bukan dibaca sebagai spasi.
-    params = dict(parse_qsl(query.replace("+", "%2B"), keep_blank_values=True))
+    params = _query_params(query)
     if not params.get("authkey"):
         raise FetchError("URL tidak berisi authkey. Buka lagi riwayat Signal Search di game.")
 
@@ -81,6 +95,30 @@ def parse_gacha_url(text: str) -> tuple[str, str]:
     api_host = API_HOST_CN if game_biz == "nap_cn" or host.endswith("mihoyo.com") else API_HOST_GLOBAL
     kept = [part for part in query.split("&") if part and unquote(part.split("=", 1)[0]) not in _OVERRIDDEN]
     return api_host, "&".join(kept)
+
+
+def parse_gacha_urls(text: str) -> list[tuple[str, str]]:
+    """Semua URL riwayat yang valid di teks, urutan dipertahankan, tanpa authkey ganda.
+
+    Script menyalin beberapa URL dari cache karena urutan entri di file cache tidak
+    selalu sesuai waktu; URL yang authkey-nya sudah kedaluwarsa dilewati saat mengambil data.
+    """
+    if not text or not text.strip():
+        raise FetchError("URL masih kosong.")
+    found, seen, first_error = [], set(), None
+    for match in _URL_RE.finditer(text):
+        try:
+            api_host, query = parse_gacha_url(match.group(0))
+        except FetchError as exc:
+            first_error = first_error or exc
+            continue
+        authkey = _query_params(query)["authkey"]
+        if authkey not in seen:
+            seen.add(authkey)
+            found.append((api_host, query))
+    if not found:
+        raise first_error or FetchError("Tidak ditemukan URL https:// di teks yang ditempel.")
+    return found[:MAX_URLS]
 
 
 def build_api_url(api_host: str, base_query: str, real_gacha_type: int, end_id: str) -> str:
@@ -133,11 +171,7 @@ def _check_retcode(payload: dict) -> list[dict]:
     detail = _server_message(payload)
     # ZZZ membalas authkey kedaluwarsa dengan retcode -1 + "auth key time out", bukan -101.
     if retcode == -101 or (retcode != 0 and "time out" in detail.lower().replace("timeout", "time out")):
-        raise FetchError(
-            "authkey sudah kedaluwarsa. Buka lagi Signal Search → History di game, jalankan script, lalu tempel "
-            "URL yang baru. Kalau URL baru pun kedaluwarsa, download ulang script versi terbaru di halaman Panduan: "
-            "versi lama bisa mengambil URL lama dari cache."
-        )
+        raise AuthkeyExpired(f"authkey sudah kedaluwarsa. {_EXPIRED_HINT}")
     if retcode == -100:
         raise FetchError("authkey tidak valid. Pastikan URL disalin utuh.")
     if retcode == -110:
@@ -164,10 +198,27 @@ def fetch_history(
     sleep: Callable[[float], None] = time.sleep,
     page_delay: float = 0.3,
 ) -> list[dict]:
-    """Ambil seluruh riwayat banner Agent & W-Engine terbatas."""
-    api_host, base_query = parse_gacha_url(url_text)
+    """Ambil seluruh riwayat banner Agent & W-Engine terbatas.
+
+    Kalau teks berisi beberapa URL, URL yang authkey-nya kedaluwarsa dilewati.
+    """
+    candidates = parse_gacha_urls(url_text)
     session = session or requests.Session()
     progress = progress or (lambda _msg: None)
+    expired: AuthkeyExpired | None = None
+    for index, (api_host, base_query) in enumerate(candidates, start=1):
+        if index > 1:
+            progress(f"URL ke-{index - 1} sudah kedaluwarsa, mencoba URL ke-{index} dari {len(candidates)} ...")
+        try:
+            return _fetch_all(session, api_host, base_query, progress, sleep, page_delay)
+        except AuthkeyExpired as exc:
+            expired = exc
+    if len(candidates) > 1:
+        raise AuthkeyExpired(f"Semua {len(candidates)} URL yang ditempel sudah kedaluwarsa. {_EXPIRED_HINT}")
+    raise expired
+
+
+def _fetch_all(session, api_host, base_query, progress, sleep, page_delay) -> list[dict]:
     items: list[dict] = []
     for banner in BANNERS.values():
         for index, real_type in enumerate(banner.real_gacha_types):

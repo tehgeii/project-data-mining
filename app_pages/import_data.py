@@ -31,7 +31,8 @@ with tab_url:
     st.markdown(
         "1. Buka **Signal Search → History** di game (PC).\n"
         "2. Jalankan script PowerShell (lihat **Panduan & FAQ**).\n"
-        "3. Tempel URL yang sudah tersalin otomatis ke kotak di bawah."
+        "3. Tempel URL yang sudah tersalin otomatis ke kotak di bawah. Script bisa menyalin beberapa URL; "
+        "aplikasi mencobanya satu per satu dan melewati yang sudah kedaluwarsa."
     )
     st.page_link("app_pages/panduan.py", label="Lihat panduan PowerShell", icon="📖")
     with st.form("url_form", clear_on_submit=True):

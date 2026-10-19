@@ -8,8 +8,10 @@
                      (untuk mencari folder instalasi game)
       2. Cache web : <folder game>\ZenlessZoneZero_Data\webCaches\<versi>\Cache\Cache_Data\data_2
                      (tempat URL riwayat gacha tersimpan)
-    Lalu URL terbaru disalin ke clipboard. Script TIDAK mengirim data ke mana pun,
-    tidak mengubah file game, dan tidak butuh hak administrator.
+    Lalu beberapa URL terakhir (maksimal 10, authkey berbeda) disalin ke clipboard;
+    aplikasi mencobanya satu per satu dan melewati yang sudah kedaluwarsa.
+    Script TIDAK mengirim data ke mana pun, tidak mengubah file game, dan tidak
+    butuh hak administrator.
 
     Sebelum menjalankan: buka game, buka Signal Search -> History, tunggu sampai
     riwayat tampil.
@@ -156,7 +158,7 @@ function Find-FromKnownFolders {
     return $null
 }
 
-$ScriptVersion = '1.3'
+$ScriptVersion = '1.4'
 Write-Host "== Pengambil URL riwayat gacha Zenless Zone Zero (versi $ScriptVersion) ==" -ForegroundColor Cyan
 
 if ($GameDataPath) {
@@ -189,8 +191,11 @@ if ($cacheFiles.Count -eq 0) {
     Write-Fail "File cache tidak ditemukan. Buka Signal Search -> History di game dulu, lalu jalankan lagi."
 }
 
-function Find-LatestUrl([byte[]]$Buffer) {
-    # Cache berisi banyak entri yang dipisahkan '1/0/'. Ambil URL getGachaLog terakhir.
+function Find-GachaUrls([byte[]]$Buffer) {
+    # Cache berisi banyak entri yang dipisahkan '1/0/'. Urutan entri di file TIDAK selalu
+    # sesuai waktu (slot lama dipakai ulang), jadi semua URL getGachaLog diambil, dimulai
+    # dari akhir file. Aplikasi akan mencobanya satu per satu dan melewati yang kedaluwarsa.
+    $urls = @()
     $parts = [System.Text.Encoding]::UTF8.GetString($Buffer) -split '1/0/'
     for ($i = $parts.Length - 1; $i -ge 0; $i--) {
         $part = $parts[$i]
@@ -199,16 +204,19 @@ function Find-LatestUrl([byte[]]$Buffer) {
         try { $uri = [System.Uri]$candidate } catch { continue }
         $hostOk = $uri.Host -match '(^|\.)(hoyoverse|mihoyo)\.com$'
         if ($uri.Scheme -eq 'https' -and $hostOk -and $uri.AbsolutePath.EndsWith('/getGachaLog')) {
-            return $candidate
+            $urls += $candidate
         }
     }
-    return $null
+    return ,$urls
 }
 
-$url = $null
+$MaxUrls = 10
+$urls = @()
+$seenKeys = @{}
 foreach ($cacheFile in $cacheFiles) {
     $buffer = Read-SharedBytes $cacheFile
     if ($null -eq $buffer) {
+        if ($cacheFile -ne $cacheFiles[0]) { continue }
         $running = Get-Process -ErrorAction SilentlyContinue |
             Where-Object { $_.ProcessName -like 'ZenlessZoneZero*' } |
             Select-Object -ExpandProperty ProcessName -Unique
@@ -219,17 +227,24 @@ foreach ($cacheFile in $cacheFiles) {
         }
         Write-Fail "File cache sedang dikunci oleh program lain. $hint"
     }
-    $url = Find-LatestUrl $buffer
-    if ($url) {
-        Write-Host "File cache  : $cacheFile"
-        Write-Host ("Diperbarui  : {0:dd/MM/yyyy HH:mm}" -f (Get-Item -LiteralPath $cacheFile).LastWriteTime)
-        break
+    foreach ($candidate in (Find-GachaUrls $buffer)) {
+        # URL dengan authkey yang sama cukup diambil sekali.
+        $key = [regex]::Match($candidate, '[?&]authkey=([^&]+)').Groups[1].Value
+        if (-not $key -or $seenKeys.ContainsKey($key)) { continue }
+        $seenKeys[$key] = $true
+        $urls += $candidate
     }
+    if ($urls.Count -ge $MaxUrls) { break }
 }
+$urls = @($urls | Select-Object -First $MaxUrls)
 
-if (-not $url) {
+Write-Host ("File cache  : {0}" -f $cacheFiles[0])
+Write-Host ("Diperbarui  : {0:dd/MM/yyyy HH:mm}" -f (Get-Item -LiteralPath $cacheFiles[0]).LastWriteTime)
+if ($urls.Count -eq 0) {
     Write-Fail "URL riwayat tidak ditemukan di cache. Buka Signal Search -> History di game, tunggu sampai tampil, lalu jalankan lagi."
 }
+Write-Host ("URL ditemukan: {0} (aplikasi mencoba satu per satu, URL kedaluwarsa dilewati)" -f $urls.Count)
+$url = $urls -join "`r`n"
 
 Write-Host ""
 try {

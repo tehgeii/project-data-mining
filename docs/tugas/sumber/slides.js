@@ -294,9 +294,9 @@ function uas() {
   { const s = base("Validasi dengan akun asli", "Hasil");
     stat(s, M, 2.0, 3.8, "70 / 90", "pity Agent dihitung aplikasi = di game");
     stat(s, 4.75, 2.0, 3.8, "46 / 80", "pity W-Engine + guaranteed = di game", C.blue);
-    stat(s, 8.9, 2.0, 3.8, "99 / 99", "test otomatis lolos (pytest + GitHub Actions)", C.green);
+    stat(s, 8.9, 2.0, 3.8, "106 / 106", "test otomatis lolos (pytest + GitHub Actions)", C.green);
     T(s, "Pengambilan data, perhitungan pity, dan deteksi 50/50 terbukti benar dengan data game sungguhan (versi Steam).", { x: M, y: 4.6, w: 12, h: 0.9, fontSize: 18, color: C.mut, valign: "top" });
-    s.addNotes("Validasi (±1 menit). Saat dicek, angka pity yang dihitung aplikasi untuk akun asli sama persis dengan yang tampil di game. Selain itu 99 test otomatis memastikan perhitungan tidak salah."); }
+    s.addNotes("Validasi (±1 menit). Saat dicek, angka pity yang dihitung aplikasi untuk akun asli sama persis dengan yang tampil di game. Selain itu 106 test otomatis memastikan perhitungan tidak salah."); }
   { const s = base("Tugas A: jebakan akurasi", "Hasil", C.bg2);
     stat(s, M, 1.9, 4.5, "98,3%", "akurasi model yang SELALU menebak \"tidak dapat S\"");
     table(s, [["Model", "Accuracy", "Bal. Acc.", "ROC-AUC"], ...srows([[cvA, "accuracy"], [cvA, "balanced_accuracy"], [cvA, "roc_auc"]])], 5.6, 1.8, 7.1, [2.9, 1.4, 1.4, 1.4], { size: 13, rowH: 0.48 });

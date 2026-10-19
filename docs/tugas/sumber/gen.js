@@ -259,7 +259,7 @@ const bab3 = () => [
   ...Bullets([
     "Bahasa pemrograman Python 3.12 dengan pustaka pandas, NumPy, SciPy, scikit-learn 1.9, XGBoost 3.2, dan Plotly.",
     "Streamlit 1.64 dan Streamlit Community Cloud untuk *deployment*.",
-    "Pytest dan GitHub Actions untuk pengujian otomatis (99 kasus uji).",
+    "Pytest dan GitHub Actions untuk pengujian otomatis (106 kasus uji).",
     "Windows PowerShell untuk skrip pengambil URL riwayat.",
     "GitHub untuk penyimpanan kode sumber.",
   ]),

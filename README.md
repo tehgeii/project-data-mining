@@ -76,7 +76,7 @@ scripts/
   train_models.py         # latih & evaluasi semua model -> models/
 models/                   # model terlatih + report.json (dibaca aplikasi)
 data/real/                # tempat dataset asli anonim (.csv)
-tests/                    # 99 test otomatis (pytest)
+tests/                    # 106 test otomatis (pytest)
 docs/                     # bahan laporan; docs/tugas = file UTS/UAS + kodenya (sumber/)
 ```
 

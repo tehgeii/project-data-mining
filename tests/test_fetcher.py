@@ -2,7 +2,7 @@ import pytest
 import requests
 
 from zzzgacha import fetcher
-from zzzgacha.fetcher import FetchError, build_api_url, fetch_history, parse_gacha_url
+from zzzgacha.fetcher import FetchError, build_api_url, fetch_history, parse_gacha_url, parse_gacha_urls
 
 GOOD = (
     "https://public-operation-nap-sg.hoyoverse.com/common/gacha_record/api/getGachaLog"
@@ -78,8 +78,9 @@ class FakeResponse:
 class FakeSession:
     """Server palsu: tiap real_gacha_type punya daftar item sendiri."""
 
-    def __init__(self, data, fail_types=(), errors=None):
+    def __init__(self, data, fail_types=(), errors=None, expired_keys=()):
         self.data, self.fail_types, self.errors = data, set(fail_types), list(errors or [])
+        self.expired_keys = set(expired_keys)
         self.calls = []
 
     def get(self, url, timeout, allow_redirects=True):
@@ -94,6 +95,8 @@ class FakeSession:
             if isinstance(err, Exception):
                 raise err
             return err
+        if q["authkey"] in self.expired_keys:  # balasan ZZZ untuk authkey lama
+            return FakeResponse({"retcode": -1, "message": "auth key time out"})
         gtype = int(q["real_gacha_type"])
         if gtype in self.fail_types:
             return FakeResponse({"retcode": -1, "message": "invalid gacha type"})
@@ -143,6 +146,34 @@ def test_expired_authkey_with_retcode_minus_one(message):
     session = FakeSession({}, errors=[FakeResponse({"retcode": -1, "message": message})])
     with pytest.raises(FetchError, match="kedaluwarsa"):
         fetch_history(GOOD, session=session, sleep=lambda s: None)
+
+
+def url_with(key):
+    return GOOD.replace("SECRET%2Bkey", key)
+
+
+def test_parse_urls_dedupes_and_skips_invalid():
+    text = "\n".join([url_with("A"), "https://evil.com/getGachaLog?authkey=X", url_with("A"), url_with("B")])
+    found = parse_gacha_urls(text)
+    assert [q.split("authkey=")[1].split("&")[0] for _, q in found] == ["A", "B"]
+    with pytest.raises(FetchError):
+        parse_gacha_urls("https://evil.com/getGachaLog?authkey=X")
+
+
+def test_tries_next_url_when_authkey_expired():
+    session = FakeSession({2: make_items(2, 3, 1000)}, expired_keys={"OLD1", "OLD2"})
+    messages = []
+    items = fetch_history("\r\n".join(url_with(k) for k in ("OLD1", "OLD2", "NEW")),
+                          session=session, progress=messages.append, sleep=lambda s: None)
+    assert len(items) == 3
+    assert any("mencoba URL ke-3 dari 3" in m for m in messages)
+    assert {c["authkey"] for c in session.calls} == {"OLD1", "OLD2", "NEW"}
+
+
+def test_all_urls_expired():
+    session = FakeSession({}, expired_keys={"OLD1", "OLD2"})
+    with pytest.raises(fetcher.AuthkeyExpired, match="Semua 2 URL"):
+        fetch_history(url_with("OLD1") + " " + url_with("OLD2"), session=session, sleep=lambda s: None)
 
 
 def test_unknown_retcode_shows_server_reason():
