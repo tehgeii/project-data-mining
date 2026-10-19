@@ -2,7 +2,7 @@
 
 Dokumen ini berisi bahan yang bisa langsung dipakai untuk menyusun laporan dan
 slide presentasi. Angka hasil diambil dari `models/report.json`
-(seed 42, 400 akun simulasi + 100 akun simulasi untuk grid search, 2 akun asli). Kalau model dilatih ulang, angka di aplikasi
+(seed 42, 400 akun simulasi + 100 akun simulasi untuk grid search, 3 akun asli). Kalau model dilatih ulang, angka di aplikasi
 (halaman **Perbandingan Algoritma**) selalu yang terbaru.
 
 ---
@@ -99,7 +99,7 @@ dalam N pull". Hasilnya diverifikasi dengan simulasi Monte Carlo 400.000 pull
 |---|---|
 | **Simulasi Monte Carlo** | 400 akun virtual, masing-masing 80–700 pull per banner, dibangkitkan dari model 4.1 (seed 42). Total ±314.000 pull. |
 | **Simulasi untuk grid search** | 100 akun virtual tambahan (seed 43), ±77.000 baris. Hanya untuk memilih hyperparameter, **tidak dipakai untuk evaluasi**. |
-| **Data asli** | 2 akun pemain (anggota kelompok dan teman), dalam bentuk anonim (tanpa UID, nama item, dan waktu): 1.441 pull, 22 S. Setelah segmen pertama dibuang: ±1.200 titik keputusan. Dipakai untuk **menguji** model simulasi, dan pada eksperimen kedua untuk **melatih dan menguji** hanya dengan data asli. |
+| **Data asli** | 3 akun pemain (anggota kelompok dan teman), dalam bentuk anonim (tanpa UID, nama item, dan waktu): 1.751 pull, 28 S. Setelah segmen pertama dibuang: ±1.400 titik keputusan. Dipakai untuk **menguji** model simulasi, dan pada eksperimen kedua untuk **melatih dan menguji** hanya dengan data asli. |
 
 Alasan memakai simulasi: satu akun asli hanya punya ratusan pull dengan
 beberapa S saja, terlalu sedikit untuk melatih model. Keterbatasan ini ditulis
@@ -219,30 +219,30 @@ untuk data simulasi yang besar.
 | Random Forest | **0,9108** | 0,7612 | 0,6669 | 0,8102 | 0,2816 |
 | XGBoost | **0,9108** | 0,7604 | 0,6661 | 0,8104 | 0,2815 |
 
-### Uji di data asli pemain (2 akun, model dilatih hanya dengan data simulasi)
+### Uji di data asli pemain (3 akun, model dilatih hanya dengan data simulasi)
 
 Pengujian ini menjawab pertanyaan: *apakah model yang dilatih dari simulasi
 tetap akurat untuk pemain sungguhan?*
 
 | Model | Tugas A Accuracy | Tugas B Accuracy | Tugas B Balanced Acc. | Tugas B F1 | Tugas B Log Loss |
 |---|---|---|---|---|---|
-| Baseline: selalu "tidak S" | 0,9855 | 0,8660 | 0,5000 | 0,0000 | 2,1597 |
-| Markov Chain (teori) | 0,9863 | 0,9355 | 0,7801 | 0,7023 | 0,2312 |
-| Naive Bayes | 0,9855 | 0,9107 | 0,7371 | 0,6000 | 0,2693 |
-| KNN | **0,9863** | 0,9313 | 0,7647 | 0,6770 | 0,2399 |
-| Logistic Regression | 0,9855 | 0,9115 | 0,6724 | 0,5114 | 0,2732 |
-| Decision Tree | **0,9863** | 0,9330 | 0,7709 | 0,6873 | **0,2316** |
-| Random Forest | **0,9863** | 0,9330 | 0,7735 | 0,6897 | 0,2317 |
-| XGBoost | **0,9863** | **0,9338** | **0,7740** | **0,6923** | **0,2316** |
+| Baseline: selalu "tidak S" | 0,9851 | 0,8646 | 0,5000 | 0,0000 | 2,1830 |
+| Markov Chain (teori) | 0,9858 | 0,9263 | 0,7455 | 0,6465 | 0,2528 |
+| Naive Bayes | 0,9851 | 0,9074 | 0,7170 | 0,5714 | 0,2837 |
+| KNN | **0,9858** | 0,9228 | 0,7325 | 0,6233 | 0,2694 |
+| Logistic Regression | 0,9851 | 0,9032 | 0,6447 | 0,4480 | 0,2866 |
+| Decision Tree | **0,9858** | 0,9242 | 0,7377 | 0,6327 | 0,2531 |
+| Random Forest | **0,9858** | 0,9242 | 0,7399 | 0,6351 | 0,2531 |
+| XGBoost | **0,9858** | **0,9249** | **0,7403** | **0,6373** | **0,2525** |
 
-Data asli: Tugas A 1.245 baris (18 S), Tugas B 1.209 baris (162 positif).
+Data asli: Tugas A 1.479 baris (22 S), Tugas B 1.425 baris (193 positif).
 
 ### Eksperimen kedua: latih DAN uji hanya dengan data asli
 
 Untuk memastikan hasil tidak bergantung pada data simulasi, keenam algoritma
-juga dilatih dan diuji **hanya dengan data asli** (Tugas B: 1.209 baris, 162
+juga dilatih dan diuji **hanya dengan data asli** (Tugas B: 1.425 baris, 193
 positif; sudah memenuhi ketentuan dataset tabel minimal 500–1.000 baris).
-Karena data asli hanya dari 2 akun, data dibagi per **siklus pity** (20 siklus,
+Karena data asli hanya dari 3 akun, data dibagi per **siklus pity** (25 siklus,
 GroupKFold 5-fold): siklus pity saling bebas karena peluang selalu kembali ke
 awal setelah dapat S. Hyperparameter dipilih ulang dengan grid search **di dalam
 data latih setiap fold** (*nested cross-validation*, GroupKFold 4-fold per siklus),
@@ -250,35 +250,39 @@ sehingga data uji tidak pernah ikut memilih pengaturan.
 
 | Model | Accuracy | Balanced Acc. | F1 | ROC-AUC | Log Loss |
 |---|---|---|---|---|---|
-| Baseline: selalu "tidak S" | 0,8657 ± 0,0289 | 0,5000 | 0,0000 | 0,5000 | 2,1651 |
-| Markov Chain (teori) | 0,9368 ± 0,0318 | 0,7854 | 0,6964 | 0,8205 | 0,2281 |
-| Naive Bayes | 0,9147 ± 0,0291 | 0,7081 | 0,5613 | 0,8863 | 0,2845 |
-| KNN | 0,9095 ± 0,0316 | 0,7008 | 0,5515 | 0,8515 | 0,4947 |
-| Logistic Regression | 0,9134 ± 0,0462 | 0,7336 | 0,5503 | 0,8939 | 0,2886 |
-| Decision Tree | **0,9310 ± 0,0291** | **0,7835** | **0,6819** | 0,9021 | 0,3521 |
-| Random Forest | 0,9290 ± 0,0272 | 0,7671 | 0,6667 | **0,9279** | **0,2353** |
-| XGBoost | 0,9233 ± 0,0362 | 0,7725 | 0,6471 | 0,9171 | 0,2561 |
+| Baseline: selalu "tidak S" | 0,8645 ± 0,0119 | 0,5000 | 0,0000 | 0,5000 | 2,1835 |
+| Markov Chain (teori) | 0,9264 ± 0,0149 | 0,7470 | 0,6389 | 0,7825 | 0,2527 |
+| Naive Bayes | 0,9073 ± 0,0101 | 0,6765 | 0,5108 | 0,8455 | **0,2847** |
+| KNN | 0,8529 ± 0,1024 | 0,6476 | 0,4412 | 0,7757 | 0,7433 |
+| Logistic Regression | 0,9138 ± 0,0154 | 0,7105 | 0,5591 | 0,8391 | 0,2966 |
+| Decision Tree | 0,9229 ± 0,0110 | **0,7559** | **0,6440** | **0,8505** | 0,4477 |
+| Random Forest | **0,9235 ± 0,0109** | 0,7438 | 0,6309 | 0,8323 | 0,3904 |
+| XGBoost | 0,8970 ± 0,0656 | 0,7395 | 0,5958 | 0,7900 | 0,3969 |
 
 Pengaruh grid search (accuracy rata-rata 5-fold):
 
 | Algoritma | Pengaturan awal | Nested grid search | Terpilih di setiap fold |
 |---|---|---|---|
-| Naive Bayes | 0,8788 | 0,9147 | var_smoothing = 0,1 (4×); var_smoothing = 0,01 (1×) |
-| KNN | 0,8742 | 0,9095 | k = 31 (2×); k = 15 (2×); k = 5 (1×) |
-| Logistic Regression | 0,9069 | 0,9134 | C = 0,1 (4×); C = 10 (1×) |
-| Decision Tree | 0,9310 | 0,9310 | max_depth = 6, min_samples_leaf = 50 (5×) |
-| Random Forest | 0,9299 | 0,9290 | max_depth = 8, min_samples_leaf = 20 (3×); max_depth = 8, min_samples_leaf = 10 (1×); max_depth = 6, min_samples_leaf = 10 (1×) |
-| XGBoost | 0,9222 | 0,9233 | learning_rate = 0,05, max_depth = 4 (2×); learning_rate = 0,1, max_depth = 4 (1×); learning_rate = 0,1, max_depth = 6 (1×); learning_rate = 0,05, max_depth = 6 (1×) |
+| Naive Bayes | 0,8654 | 0,9073 | var_smoothing = 0,1 (4×); var_smoothing = 1e-3 (1×) |
+| KNN | 0,8837 | 0,8529 | k = 51 (4×); k = 15 (1×) |
+| Logistic Regression | 0,9201 | 0,9138 | C = 0,1 (3×); C = 10 (1×); C = 1 (1×) |
+| Decision Tree | 0,9229 | 0,9229 | max_depth = 6, min_samples_leaf = 50 (5×) |
+| Random Forest | 0,9221 | 0,9235 | max_depth = 8, min_samples_leaf = 20 (2×); max_depth = 12, min_samples_leaf = 10 (1×); max_depth = 6, min_samples_leaf = 10 (1×); max_depth = 8, min_samples_leaf = 10 (1×) |
+| XGBoost | 0,8970 | 0,8970 | learning_rate = 0,1, max_depth = 6 (3×); learning_rate = 0,1, max_depth = 4 (1×); learning_rate = 0,05, max_depth = 3 (1×) |
 
-- Model pohon tetap teratas: Decision Tree 93,10%, Random Forest
-  92,90%, XGBoost 92,33%; teori Markov 93,68%.
-- Grid search paling membantu **Naive Bayes** (87,88% → 91,47%) dan **KNN**
-  (87,42% → 90,95%). KNN memilih k = 5, 15, 31, bukan 101: data latih tiap fold
-  hanya ±970 baris dengan ±130 positif, jadi 101 tetangga hampir selalu didominasi kelas mayoritas.
-- Akurasi Naive Bayes naik, tetapi recall-nya turun (0,76 → 0,42) karena
+- Random Forest dan Decision Tree teratas (92,35% dan 92,29%); teori Markov 92,64%.
+- Grid search tidak selalu membantu: Naive Bayes 86,54% → 90,73%; KNN 88,37% → 85,29%; Logistic Regression 92,01% → 91,38%.
+  Pengaturan dipilih hanya dari data latih tiap fold; dengan data sekecil ini, yang terbaik di
+  data latih belum tentu terbaik di data uji.
+- **KNN dan XGBoost tidak stabil.** Pada fold ke-4 akurasinya hanya KNN 64,9%, XGBoost 77,1% (Decision Tree dan Random Forest 92,1%). Data latih fold itu
+  hanya memuat satu siklus Agent berstatus guaranteed, yang kebetulan dapat S di pull ke-38. Dari
+  satu siklus itu KNN dan XGBoost belajar pola keliru "guaranteed → S segera keluar", lalu salah menebak
+  di dua siklus guaranteed lain yang ternyata panjang. Pohon dengan min_samples_leaf besar tidak
+  terpengaruh. Ini contoh overfitting pada fitur yang tidak relevan ketika data sedikit.
+- Akurasi Naive Bayes naik, tetapi recall-nya turun (0,65 → 0,36) karena
   grid search mengoptimalkan accuracy. Kalau yang diutamakan menangkap kelas
   minoritas, metrik pemilihannya perlu diganti (mis. Balanced Accuracy).
-- Simpangan baku ±2,7–4,6% (simulasi ±0,1–0,2%) karena datanya jauh lebih sedikit.
+- Simpangan baku ±1,0–10,2% (simulasi ±0,1–0,2%) karena datanya jauh lebih sedikit.
 
 ### Uji signifikansi (tugas B)
 
@@ -286,47 +290,48 @@ Selisih akurasi terhadap model acuan dalam poin persen (negatif = lebih rendah);
 p-value **tebal** = signifikan (p < 0,05). Acuan = algoritma berakurasi rata-rata
 tertinggi sebelum dibulatkan.
 
-| Model | Selisih dari XGBoost (simulasi) | p | Selisih dari Decision Tree (data asli) | p |
+| Model | Selisih dari XGBoost (simulasi) | p | Selisih dari Random Forest (data asli) | p |
 |---|---|---|---|---|
-| Baseline: selalu "tidak S" | −7,71 | **< 0,001** | −6,53 | **0,042** |
-| Markov Chain (teori) | 0,00 | 0,541 | +0,58 | 0,210 |
-| Naive Bayes | −1,88 | **< 0,001** | −1,63 | 0,471 |
-| KNN | −0,03 | 0,572 | −2,15 | 0,306 |
-| Logistic Regression | −2,20 | **< 0,001** | −1,76 | 0,497 |
-| Decision Tree | 0,00 | 0,890 | acuan | – |
-| Random Forest | 0,00 | 0,735 | −0,21 | 0,745 |
-| XGBoost | acuan | – | −0,77 | 0,616 |
+| Baseline: selalu "tidak S" | −7,71 | **< 0,001** | −5,90 | **0,003** |
+| Markov Chain (teori) | 0,00 | 0,541 | +0,28 | 0,541 |
+| Naive Bayes | −1,88 | **< 0,001** | −1,62 | 0,297 |
+| KNN | −0,03 | 0,572 | −7,06 | 0,409 |
+| Logistic Regression | −2,20 | **< 0,001** | −0,98 | 0,193 |
+| Decision Tree | 0,00 | 0,890 | −0,07 | 0,802 |
+| Random Forest | 0,00 | 0,735 | acuan | – |
+| XGBoost | acuan | – | −2,66 | 0,601 |
 
 - **Simulasi:** Decision Tree, Random Forest, dan KNN **tidak berbeda nyata** dari
   XGBoost; Naive Bayes dan Logistic Regression **nyata lebih rendah** (p < 0,001).
-- **Data asli:** hanya baseline yang nyata lebih rendah dari Decision Tree
-  (p = 0,042). Selisih antaralgoritma (0,21–2,15 poin) **belum signifikan**
-  (p = 0,31–0,75): dengan 20 siklus pity, data asli belum cukup untuk
+- **Data asli:** hanya baseline yang nyata lebih rendah dari Random Forest
+  (p = 0,003). Selisih antaralgoritma (0,07–7,06 poin) **belum signifikan**
+  (p = 0,19–0,80): dengan 25 siklus pity, data asli belum cukup untuk
   membuktikan satu algoritma lebih unggul. Yang pasti, model terbaik nyata di atas baseline.
 
 ### Pola soft pity pada data asli
 
-Laju S per pull di data asli (Tugas A, 1.245 baris) per rentang "pull ke-n sejak
+Laju S per pull di data asli (Tugas A, 1.479 baris) per rentang "pull ke-n sejak
 S terakhir", dibandingkan rata-rata peluang model Markov (dibuat ulang dengan
 `docs/tugas/sumber/figs.py`):
 
 | Banner | Pull ke- | Jumlah pull | S | Laju data asli | Model Markov |
 |---|---|---|---|---|---|
-| Agent | 1–60 | 788 | 4 | 0,5% | 0,6% |
-| Agent | 61–73 | 107 | 1 | 0,9% | 0,6% |
+| Agent | 1–60 | 916 | 5 | 0,5% | 0,6% |
+| Agent | 61–73 | 119 | 2 | 1,7% | 0,6% |
 | Agent | 74–78 | 35 | 5 | **14,3%** | 15,3% |
 | Agent | 79–90 | 8 | 3 | **37,5%** | 39,7% |
-| W-Engine | 1–55 | 260 | 1 | 0,4% | 1,0% |
+| W-Engine | 1–55 | 354 | 3 | 0,8% | 1,0% |
 | W-Engine | 56–64 | 36 | 0 | 0,0% | 1,0% |
 | W-Engine | 65–80 | 11 | 4 | **36,4%** | 12,0% |
 
-- **Agent:** hampir nol sampai pull ke-73, lalu melonjak mulai pull ke-74,
-  sangat dekat dengan model (estimasi soft pity pull ke-74).
-- **W-Engine:** tidak ada S antara pull ke-21 dan ke-65, lalu 4 dari 11 pull
+- **Agent:** 0,7% sampai pull ke-73 (7 S dari 1.035 pull), lalu melonjak menjadi
+  14,3% di pull ke-74–78 dan 37,5% di pull ke-79–90, sangat dekat dengan model
+  (estimasi soft pity pull ke-74).
+- **W-Engine:** sebelum pull ke-65 hanya 3 S dari 390 pull, lalu 4 dari 11 pull
   setelahnya dapat S (36,4%), lebih tinggi dari model (12,0%). Mungkin peluang
   W-Engine naik lebih cepat dari asumsi, tetapi datanya masih terlalu sedikit.
 - Decision Tree yang dilatih **hanya dengan data asli** (Tugas B) memisah pertama
-  kali di `pity_ratio <= 0,735` (pity ±66 Agent, ±59 W-Engine), sekitar 8–10 pull
+  kali di `pity_ratio <= 0,724` (pity ±65 Agent, ±58 W-Engine), sekitar 8–10 pull
   sebelum soft pity, sama seperti pohon yang dilatih di simulasi (0,71–0,74).
 
 Jadi lonjakan peluang yang tidak diumumkan resmi **bisa ditemukan dari data asli**.
@@ -357,33 +362,34 @@ Jadi lonjakan peluang yang tidak diumumkan resmi **bisa ditemukan dari data asli
    berdistribusi normal, padahal `pity` dan `pity_ratio` sangat berkaitan dan
    peluang S tidak berbentuk lonceng. Log Loss keduanya paling besar di antara
    keenam algoritma.
-5. **KNN setara model pohon.** Karena fiturnya sedikit dan berulang (pity
-   hanya 0–89), tetangga terdekat praktis adalah pull lain dengan pity yang
+5. **KNN setara model pohon di data simulasi.** Karena fiturnya sedikit dan berulang
+   (pity hanya 0–89), tetangga terdekat praktis adalah pull lain dengan pity yang
    sama, sehingga KNN meniru peluang empiris per pity. Kelemahannya: model
-   menyimpan seluruh data latih, prediksinya paling lambat, dan nilai k harus
-   disesuaikan dengan ukuran data (di data asli yang kecil, grid search memilih
-   k = 5–31, bukan 101).
-6. **Fitur `guaranteed` hampir tidak berpengaruh** (feature importance ≈ 0).
-   Ini benar secara aturan game: guaranteed hanya menentukan *S mana* yang
-   keluar, bukan *kapan* S keluar.
-7. **Terbukti di data asli.** Urutan hasil di data 2 akun asli sama dengan
-   di simulasi: model pohon ±93,3–93,4% dan KNN ±93,1%, Logistic Regression dan
-   Naive Bayes ±91,1%, baseline ±86,6%, dan Markov (teori) ±93,5%. Akurasinya
+   menyimpan seluruh data latih, prediksinya paling lambat, dan pada data asli
+   yang kecil KNN tidak stabil (lihat eksperimen kedua).
+6. **Fitur `guaranteed` hampir tidak berpengaruh** pada model yang dilatih di
+   simulasi (feature importance ≈ 0). Ini benar secara aturan game: guaranteed hanya
+   menentukan *S mana* yang keluar, bukan *kapan* S keluar. Namun di data asli yang
+   kecil, fitur ini justru bisa menyesatkan KNN dan XGBoost ketika siklus guaranteed
+   di data latih hanya sedikit.
+7. **Terbukti di data asli.** Urutan hasil di data 3 akun asli sama dengan
+   di simulasi: model pohon ±92,4–92,5% dan KNN ±92,3%, Naive Bayes ±90,7%,
+   Logistic Regression ±90,3%, baseline ±86,5%, dan Markov (teori) ±92,6%. Akurasinya
    lebih tinggi daripada simulasi karena kelas positif di data asli lebih sedikit
-   (13,4% vs 16,6%), sehingga baseline juga naik (86,6% vs 83,4%); keunggulan di
-   atas baseline sama-sama ±7 poin. Artinya asumsi soft pity yang dipakai simulasi
-   tidak bertentangan dengan perilaku gacha sungguhan (dengan catatan data asli
-   baru 2 akun). Selain itu, pity dan status
-   guaranteed yang dihitung aplikasi untuk akun asli **sama persis** dengan
-   yang tampil di game.
+   (13,5% vs 16,6%), sehingga baseline juga naik (86,5% vs 83,4%); keunggulan di
+   atas baseline 7,7 poin (simulasi) dan 6,0 poin (data asli). Artinya asumsi soft pity yang dipakai
+   simulasi tidak bertentangan dengan perilaku gacha sungguhan (dengan catatan data asli
+   baru 3 akun). Selain itu, pity dan status guaranteed yang dihitung aplikasi untuk
+   akun asli **sama persis** dengan yang tampil di game.
 8. **Tidak bergantung pada simulasi.** Saat dilatih dan diuji hanya dengan
-   data asli (1.209 baris), Decision Tree (93,10%), Random Forest (92,90%), dan
-   XGBoost (92,33%) tetap tertinggi, walaupun selisihnya dengan algoritma lain
-   belum signifikan karena data asli baru 20 siklus pity.
-9. **Pengaruh grid search.** Grid search paling berpengaruh pada algoritma yang
-   pengaturan awalnya tidak cocok dengan data: Naive Bayes, dan KNN di data asli
-   yang kecil (87,42% → 90,95%). Model pohon hampir tidak berubah. Kesimpulan
-   tentang algoritma terbaik tidak berubah setelah grid search.
+   data asli (1.425 baris), Random Forest (92,35%) dan Decision Tree (92,29%)
+   tetap tertinggi, walaupun selisihnya dengan algoritma lain belum signifikan karena
+   data asli baru 25 siklus pity.
+9. **Pengaruh grid search.** Grid search paling berpengaruh pada Naive Bayes, yang
+   pengaturan awalnya tidak cocok dengan data. Di data asli yang kecil, grid search
+   di dalam setiap fold tidak selalu memilih pengaturan yang lebih baik (KNN dan
+   Logistic Regression sedikit turun), jadi hasilnya perlu dibaca bersama simpangan
+   bakunya. Kesimpulan tentang algoritma terbaik tidak berubah.
 10. **Batas atas.** Tidak ada model yang bisa jauh melampaui Markov Chain
    (teori), karena hasil gacha memang acak. Model terbaik adalah yang paling
    mendekati peluang sebenarnya.
@@ -397,12 +403,15 @@ Jadi lonjakan peluang yang tidak diumumkan resmi **bisa ditemukan dari data asli
 - Data latih utama berasal dari simulasi berdasarkan model 4.1, sehingga model
   ML "belajar ulang" asumsi tersebut. Data asli pemain dipakai untuk menguji
   apakah asumsi itu cocok dengan kenyataan, dan hasilnya tidak bertentangan.
-- Data asli baru 2 akun (18 S pada Tugas A, 20 siklus pity). Baris dalam satu
+- Data asli baru 3 akun (22 S pada Tugas A, 25 siklus pity). Baris dalam satu
   siklus saling berkaitan, jadi informasinya lebih sedikit daripada jumlah baris,
   dan angka uji data asli masih bisa bergeser kalau datanya ditambah (simpangan
-  baku eksperimen latih di data asli ±2,7–4,6%). Akibatnya uji signifikansi di
+  baku eksperimen latih di data asli ±1,0–10,2%). Akibatnya uji signifikansi di
   data asli punya daya uji rendah: selisih kecil antaralgoritma sulit dibuktikan.
   Makin banyak akun (minimal 5, idealnya 10 atau lebih), makin kuat kesimpulannya.
+- Siklus berstatus guaranteed di data asli masih sangat sedikit, sehingga
+  algoritma yang fleksibel (KNN, XGBoost) bisa mempelajari pola keliru dari fitur
+  `guaranteed`.
 - Grid search hanya mencoba ruang pencarian yang terbatas dan memakai accuracy
   sebagai metrik pemilihan, jadi pengaturan terpilih belum tentu terbaik untuk
   metrik lain seperti Balanced Accuracy.
@@ -420,13 +429,14 @@ Jadi lonjakan peluang yang tidak diumumkan resmi **bisa ditemukan dari data asli
   sesuai tanpa diberi tahu.
 - Untuk memprediksi keluarnya S, **Decision Tree, Random Forest, XGBoost, dan
   KNN** memberikan akurasi tertinggi dan tidak berbeda nyata satu sama lain
-  (±91,1% pada tugas 10 pull di simulasi, ±93,1–93,4% di data asli), hampir sama
+  (±91,1% pada tugas 10 pull di simulasi, ±92,3–92,5% di data asli), hampir sama
   dengan batas teoretis. Naive Bayes dan Logistic Regression nyata lebih rendah
   di simulasi walaupun hyperparameter-nya sudah dipilih dengan grid search. Saat
-  dilatih dan diuji hanya dengan data asli (1.209 baris), Decision Tree tertinggi
-  (93,10%), tetapi selisihnya dengan algoritma lain belum signifikan.
-- Grid search terutama memperbaiki algoritma yang pengaturan awalnya tidak cocok
-  dengan data (Naive Bayes, dan KNN di data asli), tanpa mengubah kesimpulan.
+  dilatih dan diuji hanya dengan data asli (1.425 baris), Random Forest tertinggi
+  (92,35%), tetapi selisihnya dengan algoritma lain belum signifikan.
+- Grid search terutama memperbaiki Naive Bayes. Di data asli yang kecil hasilnya
+  tidak selalu lebih baik, dan KNN serta XGBoost tidak stabil karena mempelajari
+  pola keliru dari fitur `guaranteed`; kesimpulan tentang algoritma terbaik tidak berubah.
 - **Accuracy tidak cukup** untuk data tidak seimbang; perlu metrik pendukung
   seperti Balanced Accuracy, F1, ROC-AUC, dan Log Loss.
 

@@ -98,7 +98,7 @@ docs/                     # bahan laporan; docs/tugas = file UTS/UAS + kodenya (
 - **Uji signifikansi:** selisih akurasi antar-model diuji dengan uji t
   berpasangan terkoreksi (Nadeau & Bengio, 2003) pada hasil setiap fold.
 - **Eksperimen kedua:** keenam algoritma juga dilatih dan diuji hanya dengan
-  data asli (1.209 baris, GroupKFold 5-fold per siklus pity, grid search diulang
+  data asli (1.425 baris, GroupKFold 5-fold per siklus pity, grid search diulang
   di dalam setiap fold), tab "Latih di data asli" di halaman Perbandingan Algoritma.
 - **Pembanding:** baseline "selalu tebak tidak S" (membuktikan jebakan akurasi)
   dan Markov Chain (peluang teoretis).

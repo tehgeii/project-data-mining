@@ -235,11 +235,8 @@ with tab_real:
                  "Hyperparameter terpilih per fold": " | ".join(fmt_params(p) for p in rcv["params"][name])}
                 for name in rcv["params"]
             ]), hide_index=True)
-            ks = sorted({p["kneighborsclassifier__n_neighbors"] for p in rcv["params"].get("KNN", [])})
-            k0 = task.get("tuning", {}).get("grids", {}).get("KNN", {}).get("kneighborsclassifier__n_neighbors", [None])[0]
-            if ks and k0 and max(ks) < k0:
-                st.caption(f"Contoh: pada data asli yang kecil, KNN memilih k = {', '.join(map(str, ks))}, jauh lebih "
-                           f"kecil daripada k = {k0} di pengaturan awal, sehingga tidak lagi selalu menebak kelas mayoritas.")
+            st.caption("Pengaturan dipilih hanya dari data latih setiap fold. Pada data sekecil ini, pengaturan yang "
+                       "terbaik di data latih belum tentu terbaik di data uji, jadi akurasinya bisa naik atau turun.")
 
 with tab_soft:
     sp = report.get("softpity")
