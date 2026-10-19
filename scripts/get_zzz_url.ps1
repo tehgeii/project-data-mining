@@ -156,7 +156,7 @@ function Find-FromKnownFolders {
     return $null
 }
 
-$ScriptVersion = '1.2'
+$ScriptVersion = '1.3'
 Write-Host "== Pengambil URL riwayat gacha Zenless Zone Zero (versi $ScriptVersion) ==" -ForegroundColor Cyan
 
 if ($GameDataPath) {
@@ -175,50 +175,54 @@ if (-not $GameDataPath) {
 }
 Write-Host "Folder game : $GameDataPath"
 
-# Pilih folder cache dengan versi terbesar (mis. 2.0.0.3 > 1.9.0.1).
+# Setiap versi game punya folder cache sendiri di webCaches. Folder dengan nomor versi
+# terbesar belum tentu yang sedang dipakai game (bisa sisa versi lama yang URL-nya sudah
+# kedaluwarsa), jadi file cache diurutkan dari yang PALING BARU DIUBAH.
 $webCaches = Join-Path $GameDataPath 'webCaches'
-$versionDirs = Get-ChildItem -LiteralPath $webCaches -Directory -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
-    Sort-Object { [version]$_.Name } -Descending
-$cacheFile = $null
-foreach ($dir in $versionDirs) {
-    $candidate = Join-Path $dir.FullName 'Cache\Cache_Data\data_2'
-    if (Test-Path -LiteralPath $candidate) { $cacheFile = $candidate; break }
-}
-if (-not $cacheFile) {
-    $candidate = Join-Path $webCaches 'Cache\Cache_Data\data_2'
-    if (Test-Path -LiteralPath $candidate) { $cacheFile = $candidate }
-}
-if (-not $cacheFile) {
+$cacheFiles = @(Get-ChildItem -LiteralPath $webCaches -Directory -ErrorAction SilentlyContinue |
+    ForEach-Object { Join-Path $_.FullName 'Cache\Cache_Data\data_2' })
+$cacheFiles += (Join-Path $webCaches 'Cache\Cache_Data\data_2')
+$cacheFiles = @($cacheFiles |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    Sort-Object { (Get-Item -LiteralPath $_).LastWriteTimeUtc } -Descending)
+if ($cacheFiles.Count -eq 0) {
     Write-Fail "File cache tidak ditemukan. Buka Signal Search -> History di game dulu, lalu jalankan lagi."
 }
-Write-Host "File cache  : $cacheFile"
 
-# Cache berisi banyak entri yang dipisahkan '1/0/'. Ambil URL getGachaLog terbaru.
-$buffer = Read-SharedBytes $cacheFile
-if ($null -eq $buffer) {
-    $running = Get-Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.ProcessName -like 'ZenlessZoneZero*' } |
-        Select-Object -ExpandProperty ProcessName -Unique
-    $hint = if ($running) {
-        "Game masih berjalan di latar belakang ($($running -join ', ')). Tutup lewat Task Manager, lalu jalankan lagi."
-    } else {
-        "Tutup game dulu (URL tetap tersimpan setelah game ditutup), lalu jalankan script ini lagi."
+function Find-LatestUrl([byte[]]$Buffer) {
+    # Cache berisi banyak entri yang dipisahkan '1/0/'. Ambil URL getGachaLog terakhir.
+    $parts = [System.Text.Encoding]::UTF8.GetString($Buffer) -split '1/0/'
+    for ($i = $parts.Length - 1; $i -ge 0; $i--) {
+        $part = $parts[$i]
+        if (-not $part.StartsWith('http') -or -not $part.Contains('getGachaLog')) { continue }
+        $candidate = ($part -split "`0")[0].Trim()
+        try { $uri = [System.Uri]$candidate } catch { continue }
+        $hostOk = $uri.Host -match '(^|\.)(hoyoverse|mihoyo)\.com$'
+        if ($uri.Scheme -eq 'https' -and $hostOk -and $uri.AbsolutePath.EndsWith('/getGachaLog')) {
+            return $candidate
+        }
     }
-    Write-Fail "File cache sedang dikunci oleh program lain. $hint"
+    return $null
 }
-$content = [System.Text.Encoding]::UTF8.GetString($buffer)
-$parts = $content -split '1/0/'
 
 $url = $null
-for ($i = $parts.Length - 1; $i -ge 0; $i--) {
-    $part = $parts[$i]
-    if (-not $part.StartsWith('http') -or -not $part.Contains('getGachaLog')) { continue }
-    $candidate = ($part -split "`0")[0].Trim()
-    try { $uri = [System.Uri]$candidate } catch { continue }
-    $hostOk = $uri.Host -match '(^|\.)(hoyoverse|mihoyo)\.com$'
-    if ($uri.Scheme -eq 'https' -and $hostOk -and $uri.AbsolutePath.EndsWith('/getGachaLog')) {
-        $url = $candidate
+foreach ($cacheFile in $cacheFiles) {
+    $buffer = Read-SharedBytes $cacheFile
+    if ($null -eq $buffer) {
+        $running = Get-Process -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProcessName -like 'ZenlessZoneZero*' } |
+            Select-Object -ExpandProperty ProcessName -Unique
+        $hint = if ($running) {
+            "Game masih berjalan di latar belakang ($($running -join ', ')). Tutup lewat Task Manager, lalu jalankan lagi."
+        } else {
+            "Tutup game dulu (URL tetap tersimpan setelah game ditutup), lalu jalankan script ini lagi."
+        }
+        Write-Fail "File cache sedang dikunci oleh program lain. $hint"
+    }
+    $url = Find-LatestUrl $buffer
+    if ($url) {
+        Write-Host "File cache  : $cacheFile"
+        Write-Host ("Diperbarui  : {0:dd/MM/yyyy HH:mm}" -f (Get-Item -LiteralPath $cacheFile).LastWriteTime)
         break
     }
 }

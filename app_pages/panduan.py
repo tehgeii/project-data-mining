@@ -63,7 +63,12 @@ with st.expander("Apakah aman? Bisa kena ban?"):
 """
     )
 with st.expander("Muncul 'authkey sudah kedaluwarsa'"):
-    st.write("Buka lagi Signal Search → History di game, lalu jalankan ulang script untuk mendapatkan URL baru.")
+    st.write(
+        "Buka lagi Signal Search → History di game, lalu jalankan ulang script untuk mendapatkan URL baru. "
+        "Kalau URL yang baru diambil pun langsung kedaluwarsa, download ulang script di atas dan pastikan "
+        "baris pertamanya menulis **versi 1.3** atau lebih baru. Versi lama bisa mengambil URL dari folder cache "
+        "versi game lama, terutama pada instalasi HoYoPlay yang punya beberapa folder di `webCaches`."
+    )
 with st.expander("Muncul 'Server menolak permintaan (retcode ...)'"):
     st.markdown(
         """

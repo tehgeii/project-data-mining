@@ -138,6 +138,13 @@ def test_retcode_messages(retcode, msg):
         fetch_history(GOOD, session=session, sleep=lambda s: None)
 
 
+@pytest.mark.parametrize("message", ["auth key time out", "authkey timeout"])
+def test_expired_authkey_with_retcode_minus_one(message):
+    session = FakeSession({}, errors=[FakeResponse({"retcode": -1, "message": message})])
+    with pytest.raises(FetchError, match="kedaluwarsa"):
+        fetch_history(GOOD, session=session, sleep=lambda s: None)
+
+
 def test_unknown_retcode_shows_server_reason():
     reply = {"retcode": -1, "message": "system error, see https://example.com/x?authkey=a"}
     session = FakeSession({}, errors=[FakeResponse(reply)])

@@ -130,14 +130,19 @@ def _check_retcode(payload: dict) -> list[dict]:
     if not isinstance(payload, dict):
         raise FetchError("Respons server tidak dikenali.")
     retcode = payload.get("retcode")
-    if retcode == -101:
-        raise FetchError("authkey sudah kedaluwarsa. Buka lagi riwayat Signal Search di game lalu ambil URL baru.")
+    detail = _server_message(payload)
+    # ZZZ membalas authkey kedaluwarsa dengan retcode -1 + "auth key time out", bukan -101.
+    if retcode == -101 or (retcode != 0 and "time out" in detail.lower().replace("timeout", "time out")):
+        raise FetchError(
+            "authkey sudah kedaluwarsa. Buka lagi Signal Search → History di game, jalankan script, lalu tempel "
+            "URL yang baru. Kalau URL baru pun kedaluwarsa, download ulang script versi terbaru di halaman Panduan: "
+            "versi lama bisa mengambil URL lama dari cache."
+        )
     if retcode == -100:
         raise FetchError("authkey tidak valid. Pastikan URL disalin utuh.")
     if retcode == -110:
         raise FetchError("Terlalu sering meminta data. Tunggu sebentar lalu coba lagi.")
     if retcode != 0:
-        detail = _server_message(payload)
         raise FetchError(
             f"Server menolak permintaan (retcode {retcode}{': ' + detail if detail else ''}). "
             "Buka lagi Signal Search → History di game, jalankan ulang script, lalu tempel URL yang baru. "
