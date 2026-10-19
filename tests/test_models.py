@@ -127,6 +127,7 @@ def test_training_script_end_to_end(tmp_path, monkeypatch):
     mod.main(["--accounts", "12", "--cv", "2", "--tune-accounts", "8", "--real-dir", str(real_dir), "--out", str(out)])
     report = json.loads((out / "report.json").read_text())
     assert set(report["tasks"]) == set(M.TASKS)
+    assert report["real_data"]["accounts"] == 1 and report["real_data"]["pulls"] == len(demo_items())
     assert report["tasks"]["next_10"]["real"] is not None
     real_cv = report["tasks"]["next_10"]["real_cv"]
     assert real_cv is not None and real_cv["rows"] > 0 and real_cv["groups"] >= 5

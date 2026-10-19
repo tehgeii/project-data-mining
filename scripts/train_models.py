@@ -99,6 +99,11 @@ def main(argv: list[str] | None = None) -> dict:
             }
             for b in (AGENT, WENGINE)
         },
+        "real_data": {
+            "accounts": int(real_raw["account"].nunique()),
+            "pulls": int(len(real_raw)),
+            "s_rank": int(real_raw["is_s"].sum()) if len(real_raw) else 0,
+        },
         "tasks": {},
     }
     all_models = {}

@@ -7,6 +7,7 @@ const REPORT = process.env.REPORT || path.join(__dirname, "../../../models/repor
 const R = JSON.parse(fs.readFileSync(REPORT, "utf8"));
 const A = R.tasks.next_pull;
 const B = R.tasks.next_10;
+const RD = R.real_data; // jumlah akun, pull, dan S-Rank data asli
 
 const BASELINE = "Baseline: selalu tebak 'tidak S'";
 const MARKOV = "Markov Chain (teori)";
@@ -20,6 +21,8 @@ const num = (x, dec = 4) => x.toLocaleString("id-ID", { minimumFractionDigits: d
 const int = (n) => n.toLocaleString("id-ID");
 const pct = (x, dec = 1) => `${num(x * 100, dec)}%`;
 const bold = (s, on) => (on ? `**${s}**` : s);
+const KATA = ["nol", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh"];
+const kata = (n) => KATA[n] ?? String(n); // 3 -> "tiga"
 
 // nilai rata-rata (cross-validation) atau nilai tunggal (data uji)
 const val = (scores, name, key) => {
@@ -69,6 +72,23 @@ const params = (p) => Object.entries(p).map(([k, v]) => `${PARAM[k] ?? k} = ${pv
 const grid = (name) => Object.entries(B.tuning.grids[name])
   .map(([k, vs]) => `${PARAM[k] ?? k} ∈ {${vs.map(pval).join("; ")}}`).join("; ");
 
+// ---------- pola soft pity (data asli) ----------
+// laju S-Rank sebelum dan sesudah titik soft pity per banner, dibandingkan model Markov
+function soft(banner) {
+  const rows = R.softpity.ranges.filter((r) => r.banner === banner);
+  const start = rows[0].soft_pity_start;
+  const part = (rs) => {
+    const s = rs.reduce((a, r) => a + r.s, 0), pulls = rs.reduce((a, r) => a + r.pulls, 0);
+    const model = rs.reduce((a, r) => a + r.model * r.pulls, 0) / pulls;
+    return { s, pulls, rate: s / pulls, model };
+  };
+  const after = rows.filter((r) => r.lo >= start);
+  const post = part(after);
+  // dibanding model: selisih kurang dari separuh dianggap "mendekati"
+  const vs = post.rate > post.model * 1.5 ? "lebih tinggi daripada" : post.rate < post.model / 1.5 ? "lebih rendah daripada" : "mendekati";
+  return { rows, start, pre: part(rows.filter((r) => r.hi < start)), post, after, vs };
+}
+
 // ---------- uji signifikansi ----------
 const pnum = (p) => (p < 0.001 ? "< 0,001" : num(p, 3));
 // selisih akurasi dalam poin persen: "+0,58", "−1,63", "0,00"
@@ -77,4 +97,4 @@ const pts = (d) => {
   return s === num(0, 2) ? s : `${d > 0 ? "+" : "−"}${s}`;
 };
 
-module.exports = { R, A, B, BASELINE, MARKOV, ML, ALL, label, num, int, pct, bold, val, best, rows, params, grid, pnum, pts, PARAM };
+module.exports = { R, A, B, RD, kata, soft, BASELINE, MARKOV, ML, ALL, label, num, int, pct, bold, val, best, rows, params, grid, pnum, pts, PARAM };

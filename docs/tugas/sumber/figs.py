@@ -42,7 +42,7 @@ def style(ax):
     ax.tick_params(axis="x", length=0)
 
 
-def fig_akurasi(task):
+def fig_akurasi(task, accounts):
     """Tugas B: akurasi cross-validation simulasi vs uji data asli (model dilatih di simulasi)."""
     names = [BASELINE, MARKOV, *ML]
     sim = [task["cross_validation"]["scores"][n]["accuracy"]["mean"] * 100 for n in names]
@@ -50,7 +50,7 @@ def fig_akurasi(task):
     fig, ax = plt.subplots(figsize=(9, 4.4), dpi=200)
     x = range(len(names))
     w = 0.4
-    for off, vals, color, label in ((-w / 2, sim, BLUE, "Simulasi (5-fold CV)"), (w / 2, real, ORANGE, "Data asli (2 akun)")):
+    for off, vals, color, label in ((-w / 2, sim, BLUE, "Simulasi (5-fold CV)"), (w / 2, real, ORANGE, f"Data asli ({accounts} akun)")):
         bars = ax.bar([i + off for i in x], vals, w, color=color, label=label)
         for b, v in zip(bars, vals):
             ax.text(b.get_x() + b.get_width() / 2, v + 0.25, f"{v:.1f}", ha="center", va="bottom", fontsize=8)
@@ -194,7 +194,8 @@ def fig_importance(task):
 def main(report_path=REPORT):
     report = json.loads(Path(report_path).read_text(encoding="utf-8"))
     task = report["tasks"]["next_10"]
-    for make in (fig_akurasi, fig_real_cv, fig_metrik, fig_cm, fig_kurva, fig_importance):
+    fig_akurasi(task, report["real_data"]["accounts"])
+    for make in (fig_real_cv, fig_metrik, fig_cm, fig_kurva, fig_importance):
         make(task)
     if report.get("softpity"):
         fig_softpity(report["softpity"]["ranges"])
