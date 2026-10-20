@@ -7,8 +7,10 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 | File | Untuk | Keterangan |
 |---|---|---|
 | `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal Proyek Akhir (Bab I–III, jadwal, pustaka) |
+| `UTS_Proposal_Kelompok6_A11.4502.pdf` | **UTS** | Versi PDF proposal (isi dan tata letak sama dengan .docx) |
 | `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 18 slide + catatan pembicara (±25 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
+| `UAS_Laporan_Akhir_Kelompok6_A11.4502.pdf` | **UAS** | Versi PDF laporan akhir (isi dan tata letak sama dengan .docx) |
 | `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 26 slide + catatan pembicara (±38 menit) |
 | `sumber/` | (tidak dikumpulkan) | Kode pembuat keempat file di atas. Lihat `sumber/README.md` |
 

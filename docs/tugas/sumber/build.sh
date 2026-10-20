@@ -1,6 +1,6 @@
 #!/bin/bash
 # Membuat ulang keempat file tugas di docs/tugas/.
-#   bash build.sh            -> proposal, laporan, dan kedua slide
+#   bash build.sh            -> proposal, laporan (docx + pdf), dan kedua slide
 #   bash build.sh proposal   -> hanya proposal UTS (atau: laporan / slide)
 # Butuh: Node.js (npm install sekali), LibreOffice (soffice), dan poppler-utils (pdfinfo, pdftotext).
 set -e
@@ -27,6 +27,8 @@ docx() {
     python3 pages.py "$R/$name.pdf" "$out.headings.json" "$toc"
     cmp -s "$R/prev.json" "$toc" && { echo "stabil: $name.docx ($(pdfinfo "$R/$name.pdf" | awk '/Pages/{print $2}') halaman)"; break; }
   done
+  # PDF hasil render terakhir = isi docx yang sama persis, ikut disimpan untuk dikumpulkan
+  cp "$R/$name.pdf" "$OUTDIR/$name.pdf"
   rm -f "$out.headings.json"
 }
 

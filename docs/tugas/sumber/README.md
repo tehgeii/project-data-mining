@@ -20,7 +20,7 @@ Butuh Node.js, LibreOffice, dan poppler-utils (`pdfinfo`, `pdftotext`).
 
 ```bash
 cd docs/tugas/sumber
-bash build.sh             # keempat file
+bash build.sh             # proposal & laporan (.docx + .pdf) dan kedua slide
 bash build.sh proposal    # hanya proposal UTS (pilihan lain: laporan, slide)
 ```
 

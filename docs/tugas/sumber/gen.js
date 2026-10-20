@@ -22,22 +22,25 @@ const TEAM = [
 const v = (rencana, selesai) => (PROP ? rencana : selesai);
 
 // ---------- SAMPUL ----------
+// Spasi 1,15 dan jarak antarblok dibuat hemat supaya sampul tetap muat satu halaman
+// walaupun dibuka di aplikasi lain (Word, WPS, Google Docs) yang jarak barisnya sedikit berbeda.
+const C = (text, o = {}) => Center(text, { line: 276, ...o });
 const cover = [
-  Center(PROP ? "**PROPOSAL PROYEK AKHIR**" : "**LAPORAN AKHIR PROYEK**", { size: 32, before: 600 }),
-  Center(`**${JUDUL}**`, { size: 28, before: 360, after: 240 }),
-  // logo Udinus ±4 cm, tanpa keterangan gambar
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 }, children: [new ImageRun({ type: "png", data: fs.readFileSync(`${process.env.FIG}/logo_udinus.png`), transformation: { width: 150, height: 150 }, altText: { title: "Logo Universitas Dian Nuswantoro", description: "Logo Universitas Dian Nuswantoro", name: "logo_udinus" } })] }),
-  Center(v("Disusun untuk memenuhi Ujian Tengah Semester (UTS)", "Disusun untuk memenuhi Ujian Akhir Semester (UAS)")),
-  Center("mata kuliah **Penambangan Data**", { after: 360 }),
-  Center("Kelas **A11.4502** · Kelompok **6**", { after: 240 }),
+  C(PROP ? "**PROPOSAL PROYEK AKHIR**" : "**LAPORAN AKHIR PROYEK**", { size: 32 }),
+  C(`**${JUDUL}**`, { size: 28, before: 240, after: 240 }),
+  // logo Udinus ±3,5 cm, tanpa keterangan gambar
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 }, children: [new ImageRun({ type: "png", data: fs.readFileSync(`${process.env.FIG}/logo_udinus.png`), transformation: { width: 135, height: 135 }, altText: { title: "Logo Universitas Dian Nuswantoro", description: "Logo Universitas Dian Nuswantoro", name: "logo_udinus" } })] }),
+  C(v("Disusun untuk memenuhi Ujian Tengah Semester (UTS)", "Disusun untuk memenuhi Ujian Akhir Semester (UAS)"), { after: 0 }),
+  C("mata kuliah **Penambangan Data**", { after: 240 }),
+  C("Kelas **A11.4502** · Kelompok **6**", { after: 160 }),
   TableX(["NIM", "Nama", "Peran"], TEAM, [26, 32, 42], { width: 7600, leftAll: true, size: 22 }),
-  Center("Dosen Pengampu:", { before: 480, after: 0 }),
-  Center("**Ardytha Luthfiarta, M.Kom, MCS**", { after: 720 }),
-  Center("**PROGRAM STUDI TEKNIK INFORMATIKA – S1**", { after: 0 }),
-  Center("**FAKULTAS ILMU KOMPUTER**", { after: 0 }),
-  Center("**UNIVERSITAS DIAN NUSWANTORO**", { after: 0 }),
-  Center("**SEMARANG**", { after: 0 }),
-  Center("**2026**", { after: 0 }),
+  C("Dosen Pengampu:", { before: 360, after: 0 }),
+  C("**Ardytha Luthfiarta, M.Kom, MCS**", { after: 480 }),
+  C("**PROGRAM STUDI TEKNIK INFORMATIKA – S1**", { after: 0 }),
+  C("**FAKULTAS ILMU KOMPUTER**", { after: 0 }),
+  C("**UNIVERSITAS DIAN NUSWANTORO**", { after: 0 }),
+  C("**SEMARANG**", { after: 0 }),
+  C("**2026**", { after: 0 }),
 ];
 
 // ---------- KATA PENGANTAR ----------
