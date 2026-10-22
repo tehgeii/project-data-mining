@@ -262,12 +262,17 @@ function penutup(text) {
 function uts() {
   cover("PROPOSAL PROYEK AKHIR · UTS");
   team(); latar(); alasan(); rumusan();
-  { const s = base("Batasan dan tujuan", "Pendahuluan");
+  { const s = base("Batasan dan kebaruan", "Pendahuluan");
     T(s, "Batasan", { x: M, y: 1.8, w: 5.9, h: 0.4, fontSize: 20, bold: true, color: C.acc, fontFace: HF });
     bullets(s, ["Hanya banner Agent & W-Engine terbatas", "Yang diprediksi hanya S-Rank", "Soft pity: estimasi komunitas, diperiksa dengan data asli", "Data asli: akun anggota & teman (anonim)", "Ambil riwayat otomatis: PC Windows"], M, 2.3, 5.9, 4.3, 16);
-    T(s, "Tujuan", { x: 6.9, y: 1.8, w: 5.9, h: 0.4, fontSize: 20, bold: true, color: C.blue, fontFace: HF });
-    bullets(s, ["Menghitung peluang dengan Markov Chain", "Menggali pola soft pity dari data asli", "Membandingkan 6 algoritma klasifikasi", "Evaluasi yang tepat untuk data tidak seimbang", "Aplikasi web yang nyaman di HP & PC"], 6.9, 2.3, 5.8, 4.3, 16);
-    s.addNotes("Batasan dan tujuan (±1,5 menit). Bacakan batasan: hanya dua banner terbatas dan hanya S-Rank. Lalu lima tujuan yang sejalan dengan lima rumusan masalah."); }
+    T(s, "Kebaruan", { x: 6.9, y: 1.8, w: 5.9, h: 0.4, fontSize: 20, bold: true, color: C.blue, fontFace: HF });
+    bullets(s, ["Soft pity digali langsung dari data pemain asli", "6 algoritma dibandingkan dengan acuan teori Markov Chain", "Evaluasi anti-bocor: dibagi per akun/siklus, nested CV, uji t terkoreksi", "Hasilnya langsung dipakai di aplikasi web"], 6.9, 2.3, 5.8, 4.3, 16);
+    s.addNotes("Batasan dan kebaruan (±1,5 menit). Bacakan batasan: hanya dua banner terbatas dan hanya S-Rank. Lalu empat kebaruan sesuai Subbab 1.4 proposal: soft pity digali dari data pemain asli; keenam algoritma dibandingkan dengan acuan teori Markov, bukan hanya antaralgoritma; evaluasinya dirancang supaya tidak bocor, yaitu dibagi per akun atau per siklus pity, hyperparameter dipilih tanpa data uji, dan selisih diuji dengan uji t terkoreksi; dan hasilnya langsung dipakai di aplikasi web."); }
+  { const s = base("Penelitian terdahulu", "Telaah pustaka");
+    card(s, M, 1.8, 3.9, 4.7, "Gacha & loot box", "Zendle & Cairns (2018): belanja loot box berkaitan dengan masalah judi.\nXiao dkk. (2024): peluang loot box sering tidak tampil jelas.\nChen & Fang (2023): model matematis gacha dan pity dari sisi pengembang.", C.acc, { bsize: 16 });
+    card(s, M + 4.1, 1.8, 3.9, 4.7, "Studi algoritma", "Maulidah (2023): XGBoost terbaik (92,36%) di data deposito bank.\nRahmat dkk. (2023): Random Forest terbaik (95%) di data kepuasan penumpang.\nGrinsztajn dkk. (2022): model pohon unggul di data tabular.", C.blue, { bsize: 16 });
+    card(s, M + 8.2, 1.8, 3.9, 4.7, "Celah yang diisi", "Belum ada yang memperkirakan peluang, khususnya soft pity, dari data riwayat gacha pemain. Hasil perbandingan algoritma juga berbeda-beda per data, jadi perlu diuji langsung di kasus gacha.", C.green, { bsize: 16 });
+    s.addNotes("Penelitian terdahulu (±1,5 menit). Kelompokkan jadi tiga. Pertama, penelitian gacha dan loot box: kebanyakan membahas perilaku pemain dan regulasi, misalnya kaitan loot box dengan judi dan peluang yang tidak ditampilkan jelas; yang memodelkan gacha secara matematis melihatnya dari sisi pendapatan pengembang. Kedua, penelitian perbandingan algoritma: hasilnya berbeda-beda, kadang XGBoost yang terbaik, kadang Random Forest, tetapi model berbasis pohon umumnya kuat di data tabel. Ketiga, celahnya: belum ada yang memperkirakan peluang dari data riwayat gacha pemain, dan karena hasil algoritma bergantung pada data, perbandingannya perlu diuji langsung di kasus gacha. Daftar lengkapnya ada di Tabel 2.1 proposal."); }
   aturan(); markov(); algoritma(); metrik(); crisp(); data(); fitur(); skenario();
   screenshot("Rancangan aplikasi web", "Rancangan", "app_kalkulator_top.png",
     ["Beranda: penjelasan & aturan banner", "Import Data: PowerShell, upload UIGF, input manual, data contoh", "Kalkulator Peluang: Markov Chain + prediksi 6 algoritma", "Statistik Riwayat: pity tiap S, menang 50/50", "Perbandingan Algoritma: metrik, kurva, confusion matrix", "Tema gelap, nyaman di HP"],
@@ -276,13 +281,9 @@ function uts() {
     chartBars(s, NAMES, [{ name: "Simulasi (5-fold CV)", values: ACC_SIM, color: C.blue }, { name: `Data asli (${X.RD.accounts} akun)`, values: ACC_REAL, color: C.acc }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%)" });
     card(s, 9.3, 1.8, 3.4, 4.8, "Temuan awal", `Prototipe sudah jalan; pity akun asli sama dengan di game. Model pohon & KNN ±${pctRound(X.val(cvB, "XGBoost", "accuracy"))}% (simulasi) dan ±${pctRound(rB.XGBoost.accuracy)}% (data asli). Data asli juga memperlihatkan lonjakan S Agent mulai pull ke-74, sesuai estimasi soft pity.`, C.green, { bsize: 15 });
     s.addNotes(`Hasil awal (±2 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Validasi: saat dicek, pity akun asli 70 dari 90 dan 46 dari 80 sama persis dengan di game. Hasil awal tugas B: model pohon dan KNN sekitar ${pctRound(X.val(cvB, "XGBoost", "accuracy"))} persen di simulasi dan ${pctRound(rB.XGBoost.accuracy)} persen di data asli, Logistic Regression dan Naive Bayes lebih rendah. Eksperimen latih dan uji dengan data asli saja, ${X.int(rcv.rows)} baris, juga sudah dilakukan: ${realTop[0]} tertinggi sekitar ${pctRound(X.val(rcv.scores, realTop[0], "accuracy"))} persen. Uji coba grid search membuat Naive Bayes membaik, dan uji signifikansi awal menunjukkan selisih antaralgoritma di data asli yang masih sedikit belum bermakna. Analisis awal data asli memperlihatkan laju S Agent hampir nol sampai pull ke-73 lalu melonjak mulai pull ke-74, sesuai estimasi soft pity. Hasil lengkap akan dibahas di laporan akhir.`); }
-  { const s = base("Jadwal kegiatan", "Rencana");
-    table(s, [["Kegiatan", "M1", "M2", "M3", "M4"],
-      ["Studi literatur & aturan gacha", "✓", "", "", ""], ["Pengumpulan data & simulasi", "✓", "✓", "", ""],
-      ["Pra-pemrosesan & fitur", "", "✓", "", ""], ["Pemodelan 6 algoritma + Markov", "", "✓", "✓", ""],
-      ["Evaluasi & uji data asli", "", "", "✓", ""], ["Deployment Streamlit", "", "", "✓", "✓"], ["Laporan & presentasi", "", "", "", "✓"]],
-      M, 1.8, 12.1, [6.9, 1.3, 1.3, 1.3, 1.3], { size: 15, rowH: 0.58 });
-    s.addNotes("Jadwal (±1 menit). Proyek direncanakan empat minggu. Sebutkan bahwa sebagian besar tahap sudah berjalan: prototipe, data asli, dan pemodelan sudah ada. Sisa pekerjaan: penyempurnaan evaluasi dan laporan akhir."); }
+  { const s = base("Peta jalan 14 minggu", "Rencana");
+    img(s, "fig_petajalan.png", M, 1.7, 12.1, 5.1);
+    s.addNotes("Peta jalan (±1 menit). Penelitian dibagi tiga tahap selama 14 minggu. Minggu 1 sampai 3 penelitian rintisan: membentuk kelompok, memilih topik, studi literatur, dan mempelajari aturan banner. Minggu 4 sampai 7 penelitian fundamental: mengambil riwayat gacha asli, membuat simulasi, pra-pemrosesan, dan menyusun proposal ini. Minggu 8 sampai 14 penelitian terapan: grid search, pelatihan enam algoritma, evaluasi dan uji signifikansi, analisis soft pity, aplikasi, laporan akhir, dan presentasi. Sebutkan bahwa prototipe aplikasi sudah berjalan lebih awal, jadi sisa pekerjaannya penyempurnaan evaluasi dan laporan akhir. Jadwal per minggunya ada di akhir Bab II proposal."); }
   penutup("Ada pertanyaan? Silakan coba aplikasinya langsung:").addNotes("Penutup (±1 menit). Ucapkan terima kasih, ajak membuka aplikasi lewat link, lalu buka sesi tanya jawab.");
 }
 

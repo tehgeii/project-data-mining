@@ -6,16 +6,19 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 
 | File | Untuk | Keterangan |
 |---|---|---|
-| `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal Proyek Akhir (Bab I–III, jadwal, pustaka) |
+| `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal mengikuti format contoh dari dosen (Ringkasan, Bab I–II, jadwal 14 minggu, pustaka) |
 | `UTS_Proposal_Kelompok6_A11.4502.pdf` | **UTS** | Versi PDF proposal (isi dan tata letak sama dengan .docx) |
-| `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 18 slide + catatan pembicara (±25 menit) |
+| `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 19 slide + catatan pembicara (±27 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.pdf` | **UAS** | Versi PDF laporan akhir (isi dan tata letak sama dengan .docx) |
 | `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 26 slide + catatan pembicara (±38 menit) |
 | `sumber/` | (tidak dikumpulkan) | Kode pembuat keempat file di atas. Lihat `sumber/README.md` |
 
-> Proposal UTS sudah memuat "Hasil Awal (Prototipe)" karena aplikasinya sudah jadi.
-> Sebelum dikumpulkan, baca sekali lagi dan sesuaikan kalimat yang kurang pas.
+> Proposal UTS mengikuti struktur contoh proposal yang dibagikan dosen di grup: kertas Letter,
+> margin 3 cm, sampul "PENYUSUN", Ringkasan dan Kata Kunci, Bab I (1.1–1.5), Bab II (2.1–2.7),
+> jadwal 14 minggu, dan pustaka bernomor. Uji awal ikut ditulis di Subbab 2.4 karena aplikasinya
+> sudah jadi. Sebelum dikumpulkan, cek lagi pembagian tugas di Subbab 2.7 dan sesuaikan kalimat
+> yang kurang pas.
 
 ## Data wajib di Google Form (harus sama persis untuk SEMUA anggota)
 
@@ -56,13 +59,13 @@ Catatan pembicara untuk setiap slide sudah ada di file `.pptx`
 | Bagian | Slide UTS | Slide UAS | Durasi |
 |---|---|---|---|
 | Pembukaan & tim | 1–2 | 1–2 | 2 menit |
-| Latar belakang, alasan memakai data mining, masalah (UTS: + batasan & tujuan) | 3–6 | 3–5 | 5 menit |
-| Aturan banner & landasan teori | 7–10 | 6–9 | 6 menit |
-| Metodologi & data | 11–14 | 10–12 | 5 menit |
-| Aplikasi (demo langsung) | 15 | 13–14 | 3 menit |
-| Hasil & pembahasan (UAS: termasuk grid search, uji signifikansi, dan pola soft pity) | 16 | 15–24 | 2 (UTS) / 15 (UAS) menit |
-| Jadwal / kesimpulan & penutup | 17–18 | 25–26 | 2 menit |
-| **Total** | | | **±25 menit (UTS) / ±38 menit (UAS)** |
+| Latar belakang, alasan memakai data mining, masalah (UTS: + batasan, kebaruan, penelitian terdahulu) | 3–7 | 3–5 | 5 (UAS) / 6,5 (UTS) menit |
+| Aturan banner & landasan teori | 8–11 | 6–9 | 6 menit |
+| Metodologi & data | 12–15 | 10–12 | 5 menit |
+| Aplikasi (demo langsung) | 16 | 13–14 | 3 menit |
+| Hasil & pembahasan (UAS: termasuk grid search, uji signifikansi, dan pola soft pity) | 17 | 15–24 | 2 (UTS) / 15 (UAS) menit |
+| Peta jalan 14 minggu / kesimpulan & penutup | 18–19 | 25–26 | 2 menit |
+| **Total** | | | **±27 menit (UTS) / ±38 menit (UAS)** |
 
 Tips rekaman:
 - Rekam layar dengan OBS Studio (gratis) atau Zoom (record to computer), kamera di pojok.

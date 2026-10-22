@@ -1,13 +1,12 @@
-// node gen.js proposal|laporan <output.docx>
+// node gen.js <output.docx>
+// Laporan akhir UAS. Proposal UTS dibuat terpisah oleh proposal.js (format contoh dosen).
 const fs = require("fs");
 const L = require("./lib");
 const X = require("./rep"); // angka hasil pelatihan dari models/report.json
 const { d, P, Center, Eq, BAB, H1plain, H2, H3, Bullets, Numbered, TableX, TCap, Img, Space, Break, setBab } = L;
 const { Document, Packer, Paragraph, TextRun, AlignmentType, ImageRun, NumberFormat } = d;
 
-const MODE = process.argv[2];
-const OUT = process.argv[3];
-const PROP = MODE === "proposal";
+const OUT = process.argv[2];
 const JUDUL = "PERBANDINGAN ALGORITMA KLASIFIKASI UNTUK MEMPREDIKSI PELUANG MENDAPATKAN S-RANK PADA SISTEM GACHA ZENLESS ZONE ZERO BERBASIS WEB";
 const APP = "https://project-data-mining-zzz.streamlit.app";
 const REPO = "https://github.com/tehgeii/project-data-mining";
@@ -18,19 +17,17 @@ const TEAM = [
   ["A11.2024.15826", "Zabrina Miftah Z", "Penyusun proposal dan laporan"],
   ["A11.2024.15804", "Rayya Hasya Tamimi", "Penyusun proposal dan laporan"],
 ];
-// kata kerja yang berbeda antara proposal (rencana) dan laporan (sudah dilakukan)
-const v = (rencana, selesai) => (PROP ? rencana : selesai);
 
 // ---------- SAMPUL ----------
 // Spasi 1,15 dan jarak antarblok dibuat hemat supaya sampul tetap muat satu halaman
 // walaupun dibuka di aplikasi lain (Word, WPS, Google Docs) yang jarak barisnya sedikit berbeda.
 const C = (text, o = {}) => Center(text, { line: 276, ...o });
 const cover = [
-  C(PROP ? "**PROPOSAL PROYEK AKHIR**" : "**LAPORAN AKHIR PROYEK**", { size: 32 }),
+  C("**LAPORAN AKHIR PROYEK**", { size: 32 }),
   C(`**${JUDUL}**`, { size: 28, before: 240, after: 240 }),
   // logo Udinus ±3,5 cm, tanpa keterangan gambar
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 }, children: [new ImageRun({ type: "png", data: fs.readFileSync(`${process.env.FIG}/logo_udinus.png`), transformation: { width: 135, height: 135 }, altText: { title: "Logo Universitas Dian Nuswantoro", description: "Logo Universitas Dian Nuswantoro", name: "logo_udinus" } })] }),
-  C(v("Disusun untuk memenuhi Ujian Tengah Semester (UTS)", "Disusun untuk memenuhi Ujian Akhir Semester (UAS)"), { after: 0 }),
+  C("Disusun untuk memenuhi Ujian Akhir Semester (UAS)", { after: 0 }),
   C("mata kuliah **Penambangan Data**", { after: 240 }),
   C("Kelas **A11.4502** · Kelompok **6**", { after: 160 }),
   TableX(["NIM", "Nama", "Peran"], TEAM, [26, 32, 42], { width: 7600, leftAll: true, size: 22 }),
@@ -46,7 +43,7 @@ const cover = [
 // ---------- KATA PENGANTAR ----------
 const kata = [
   H1plain("Kata Pengantar"),
-  P(`Puji syukur kami panjatkan kepada Tuhan Yang Maha Esa karena atas rahmat-Nya kami dapat menyelesaikan ${v("proposal proyek akhir", "laporan akhir proyek")} berjudul "${JUDUL.charAt(0) + JUDUL.slice(1).toLowerCase().replace("zenless zone zero", "Zenless Zone Zero").replace("s-rank", "S-Rank")}". Dokumen ini disusun untuk memenuhi ${v("Ujian Tengah Semester", "Ujian Akhir Semester")} mata kuliah Penambangan Data.`),
+  P(`Puji syukur kami panjatkan kepada Tuhan Yang Maha Esa karena atas rahmat-Nya kami dapat menyelesaikan laporan akhir proyek berjudul "${JUDUL.charAt(0) + JUDUL.slice(1).toLowerCase().replace("zenless zone zero", "Zenless Zone Zero").replace("s-rank", "S-Rank")}". Dokumen ini disusun untuk memenuhi Ujian Akhir Semester mata kuliah Penambangan Data.`),
   P("Kami mengucapkan terima kasih kepada Bapak Ardytha Luthfiarta, M.Kom, MCS selaku dosen pengampu yang telah memberikan materi dan arahan, serta kepada teman-teman pemain Zenless Zone Zero yang bersedia menyumbangkan riwayat gacha mereka secara anonim sebagai data penelitian."),
   P("Kami menyadari dokumen ini masih memiliki kekurangan. Oleh karena itu, kritik dan saran yang membangun sangat kami harapkan. Semoga dokumen ini bermanfaat bagi pembaca."),
   new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { before: 360 }, children: [new TextRun("Semarang, Oktober 2026")] }),
@@ -62,7 +59,7 @@ const bab1 = [
   P("Pada ZZZ, hadiah paling langka adalah item **S-Rank**, baik karakter (*Agent*) maupun senjata (*W-Engine*). Peluang dasarnya kecil, yaitu 0,6% untuk Agent dan 1,0% untuk W-Engine pada banner terbatas. Untuk mencegah pemain terlalu lama tidak beruntung, permainan memakai sistem **pity**: semakin lama pemain tidak mendapatkan S-Rank, peluangnya meningkat (*soft pity*) hingga pada batas tertentu S-Rank pasti didapat (*hard pity*, pull ke-90 untuk Agent dan ke-80 untuk W-Engine). Selain itu terdapat aturan 50/50 (Agent) dan 75/25 (W-Engine) yang menentukan apakah S-Rank yang keluar adalah item yang sedang dipromosikan (*rate-up*)."),
   P("Kombinasi aturan tersebut membuat pemain sulit memperkirakan sendiri peluang mendapatkan S-Rank, misalnya pertanyaan \"jika pity saya sekarang 70, berapa peluang saya mendapatkan S-Rank dalam 10 pull berikutnya?\". Padahal, riwayat gacha setiap pemain tersimpan di server dan dapat diambil sebagai data. Data riwayat ini berpotensi diolah dengan teknik penambangan data untuk menjawab pertanyaan tersebut secara kuantitatif."),
   P("Penambangan data menyediakan banyak algoritma klasifikasi, di antaranya Naive Bayes, K-Nearest Neighbor (KNN), Logistic Regression, Decision Tree, Random Forest, dan XGBoost. Masing-masing memiliki asumsi dan cara belajar yang berbeda, sehingga kinerjanya perlu dibandingkan pada kasus yang sama. Kasus gacha juga memiliki tantangan khusus, yaitu **data yang sangat tidak seimbang**: kelas \"mendapat S-Rank\" hanya sekitar 1,7% dari seluruh pull, sehingga metrik akurasi saja dapat menyesatkan."),
-  P(`Berdasarkan hal tersebut, proyek ini ${v("akan membangun", "membangun")} aplikasi berbasis web yang dapat diakses dari ponsel maupun komputer untuk menghitung peluang mendapatkan S-Rank dengan model Markov Chain, sekaligus membandingkan kinerja enam algoritma klasifikasi dalam memprediksi keluarnya S-Rank.`),
+  P(`Berdasarkan hal tersebut, proyek ini membangun aplikasi berbasis web yang dapat diakses dari ponsel maupun komputer untuk menghitung peluang mendapatkan S-Rank dengan model Markov Chain, sekaligus membandingkan kinerja enam algoritma klasifikasi dalam memprediksi keluarnya S-Rank.`),
   H2("1.2 Alasan Menggunakan Penambangan Data"),
   P("Sebelum memilih algoritma, perlu dipastikan bahwa kasus ini memang membutuhkan penambangan data. *Machine learning* tidak diperlukan apabila (1) hasil dapat ditentukan langsung oleh suatu atribut, atau (2) sudah tersedia pengetahuan atau rumus yang pasti dan lengkap. Tabel 1.1 menunjukkan bahwa kedua kondisi tersebut tidak terpenuhi pada sistem gacha Zenless Zone Zero."),
   TCap("Pemeriksaan perlu tidaknya machine learning"),
@@ -71,7 +68,7 @@ const bab1 = [
     ["Ada rumus yang pasti dan lengkap", "Hanya sebagian. Rate dasar, rate gabungan, hard pity, dan peluang rate-up diumumkan resmi, tetapi kapan soft pity dimulai dan seberapa cepat peluang naik tidak diumumkan. Perkiraan komunitas pun berbeda-beda.", "Tidak"],
   ], [27, 56, 17], { leftAll: true }),
   Space(),
-  P(`Bagian aturan yang tidak diumumkan tersebut hanya dapat diketahui dari data riwayat gacha pemain. Karena setiap pull memiliki label yang jelas (mendapat S-Rank atau tidak), masalah ini termasuk **klasifikasi** sekaligus **estimasi** peluang dalam *supervised learning*. Model Markov Chain tetap ${v("akan dipakai", "dipakai")}, tetapi sebagai **pembanding teori** yang dibangun dari parameter resmi ditambah estimasi soft pity. Algoritma klasifikasi tidak diberi tahu tentang soft pity, sehingga dapat diuji apakah mampu menemukan pola tersebut sendiri dari data.`),
+  P(`Bagian aturan yang tidak diumumkan tersebut hanya dapat diketahui dari data riwayat gacha pemain. Karena setiap pull memiliki label yang jelas (mendapat S-Rank atau tidak), masalah ini termasuk **klasifikasi** sekaligus **estimasi** peluang dalam *supervised learning*. Model Markov Chain tetap dipakai, tetapi sebagai **pembanding teori** yang dibangun dari parameter resmi ditambah estimasi soft pity. Algoritma klasifikasi tidak diberi tahu tentang soft pity, sehingga dapat diuji apakah mampu menemukan pola tersebut sendiri dari data.`),
   H2("1.3 Rumusan Masalah"),
   ...Numbered([
     "Bagaimana menghitung peluang pemain mendapatkan S-Rank dan S-Rank *rate-up* dalam N pull berdasarkan pity dan status *guaranteed* pada banner terbatas Zenless Zone Zero?",
@@ -173,9 +170,9 @@ const bab2 = () => [
 
 // ---------- BAB III ----------
 const bab3 = () => [
-  ...BAB("III", PROP ? "Metode Penelitian" : "Metodologi"),
+  ...BAB("III", "Metodologi"),
   H2("3.1 Alur Penelitian"),
-  P(`Penelitian ${v("akan dilaksanakan", "dilaksanakan")} mengikuti tahapan CRISP-DM seperti pada Gambar 3.1.`),
+  P(`Penelitian dilaksanakan mengikuti tahapan CRISP-DM seperti pada Gambar 3.1.`),
   ...Img("fig_alur.png", "Alur penelitian berdasarkan CRISP-DM", 560),
   ...Numbered([
     "**Business understanding:** merumuskan kebutuhan pemain, yaitu mengetahui peluang mendapatkan S-Rank dari pity saat ini.",
@@ -194,7 +191,7 @@ const bab3 = () => [
   ], [24, 52, 24], { leftAll: true }),
   Space(),
   P("Simulasi dipakai karena riwayat satu akun hanya berisi ratusan pull dengan sedikit S-Rank, sehingga tidak cukup untuk melatih model. Namun, simulasi dibangkitkan dari model Markov yang memuat estimasi soft pity, sehingga model yang dilatih dengan simulasi pada dasarnya mempelajari ulang asumsi tersebut. Karena itu data asli memegang peran penting: menguji apakah model dari simulasi berlaku untuk pemain sungguhan, sekaligus memeriksa pola soft pity langsung dari data."),
-  P(`Selain itu, sebagai eksperimen kedua, keenam algoritma ${v("juga akan dilatih", "juga dilatih")} dan diuji **hanya dengan data asli** (${X.int(X.B.real_cv.rows)} baris setelah pembersihan). Eksperimen ini memastikan bahwa hasil perbandingan tidak bergantung pada data simulasi, dan jumlah barisnya sudah memenuhi ketentuan dataset tabel minimal 500–1.000 baris.`),
+  P(`Selain itu, sebagai eksperimen kedua, keenam algoritma juga dilatih dan diuji **hanya dengan data asli** (${X.int(X.B.real_cv.rows)} baris setelah pembersihan). Eksperimen ini memastikan bahwa hasil perbandingan tidak bergantung pada data simulasi, dan jumlah barisnya sudah memenuhi ketentuan dataset tabel minimal 500–1.000 baris.`),
   P("Riwayat asli diambil dengan tiga cara yang disediakan aplikasi: (1) skrip PowerShell yang membaca URL riwayat dari *cache* permainan di PC, (2) unggah berkas UIGF, dan (3) input manual. Skrip hanya membaca berkas di komputer pemain dan tidak mengirim data ke mana pun; *authkey* hanya dipakai sekali dan tidak disimpan."),
   H2("3.3 Pra-pemrosesan Data"),
   ...Bullets([
@@ -220,7 +217,7 @@ const bab3 = () => [
     "**Tugas B:** apakah pemain mendapat minimal satu S-Rank dalam 10 pull berikutnya (satu kali *ten-pull*)? (kelas positif ±16,6%)",
   ]),
   H2("3.5 Pemodelan"),
-  P(`Setiap algoritma memiliki pengaturan tetap dan beberapa *hyperparameter* yang ${v("akan dipilih", "dipilih")} dengan *grid search* (Tabel 3.3). Nilai pertama pada setiap ruang pencarian adalah pengaturan awal sebelum grid search, sehingga jika beberapa kombinasi memperoleh skor yang sama persis, pengaturan awal dipertahankan.`),
+  P(`Setiap algoritma memiliki pengaturan tetap dan beberapa *hyperparameter* yang dipilih dengan *grid search* (Tabel 3.3). Nilai pertama pada setiap ruang pencarian adalah pengaturan awal sebelum grid search, sehingga jika beberapa kombinasi memperoleh skor yang sama persis, pengaturan awal dipertahankan.`),
   TCap("Algoritma, pengaturan tetap, dan ruang pencarian grid search"),
   TableX(["Algoritma", "Pengaturan tetap", "Ruang pencarian grid search"], [
     ["Naive Bayes", "Gaussian Naive Bayes", X.grid("Naive Bayes")],
@@ -236,7 +233,7 @@ const bab3 = () => [
   H2("3.6 Skenario Evaluasi"),
   ...Bullets([
     "Data dibagi **per akun**, bukan per pull, karena pull berurutan dari akun yang sama saling berkaitan. Pembagian per pull akan membocorkan informasi antara data latih dan data uji.",
-    `**Grid search** pada data simulasi: hyperparameter ${v("akan dipilih", "dipilih")} memakai ${X.B.tuning.accounts} akun simulasi tambahan (seed ${X.B.tuning.seed}) yang tidak dipakai untuk evaluasi, dengan GroupKFold ${X.B.tuning.n_splits}-fold per akun dan metrik accuracy. Pengaturan terpilih lalu dipakai untuk semua evaluasi simulasi dan model di aplikasi.`,
+    `**Grid search** pada data simulasi: hyperparameter dipilih memakai ${X.B.tuning.accounts} akun simulasi tambahan (seed ${X.B.tuning.seed}) yang tidak dipakai untuk evaluasi, dengan GroupKFold ${X.B.tuning.n_splits}-fold per akun dan metrik accuracy. Pengaturan terpilih lalu dipakai untuk semua evaluasi simulasi dan model di aplikasi.`,
     "**GroupKFold 5-fold cross-validation** dipakai untuk membandingkan model secara stabil (rata-rata ± simpangan baku).",
     "**Uji signifikansi:** akurasi setiap algoritma pada kelima fold dibandingkan dengan algoritma berakurasi tertinggi memakai uji t berpasangan terkoreksi (Subbab 2.7, α = 0,05).",
     "**GroupShuffleSplit 80/20** dipakai untuk model akhir yang disimpan ke aplikasi.",
@@ -266,28 +263,6 @@ const bab3 = () => [
     "Windows PowerShell untuk skrip pengambil URL riwayat.",
     "GitHub untuk penyimpanan kode sumber.",
   ]),
-  ...(PROP
-    ? [
-        H2("3.9 Hasil Awal (Prototipe)"),
-        P(`Prototipe aplikasi telah berjalan dan dapat diakses di ${APP}. Riwayat ${X.kata(X.RD.accounts)} akun asli berhasil diambil, dan pity serta status guaranteed yang dihitung aplikasi telah dicocokkan dengan tampilan di dalam permainan dan hasilnya sama. Pada uji awal tugas B, model berbasis pohon dan KNN mencapai akurasi ±${X.pct(X.val(X.B.cross_validation.scores, "XGBoost", "accuracy"), 0)} pada data simulasi dan ±${X.pct(X.B.real.XGBoost.accuracy, 0)} pada data asli. Eksperimen latih dan uji dengan data asli saja (${X.int(X.B.real_cv.rows)} baris) juga memberikan hasil serupa, dengan ${X.B.real_cv.significance.best} sebagai yang tertinggi (±${X.pct(X.val(X.B.real_cv.scores, X.B.real_cv.significance.best, "accuracy"))}). Uji coba grid search menunjukkan bahwa Naive Bayes membaik cukup besar setelah hyperparameter-nya disesuaikan, sedangkan uji signifikansi awal menunjukkan bahwa selisih antaralgoritma pada data asli yang masih sedikit belum bermakna secara statistik. Analisis awal data asli juga memperlihatkan lonjakan laju S-Rank mulai pull ke-74 pada banner Agent (dari di bawah 1% menjadi ${X.pct(X.R.softpity.ranges.find((r) => r.banner === "agent" && r.lo === 74).rate)}) dan sekitar pull ke-65 pada banner W-Engine, sesuai dengan estimasi soft pity yang dipakai.`),
-        ...Img("app_kalkulator.png", "Prototipe halaman Kalkulator Peluang", 380),
-        H2("3.10 Jadwal Kegiatan"),
-        TCap("Jadwal kegiatan proyek"),
-        TableX(["Kegiatan", "Minggu 1", "Minggu 2", "Minggu 3", "Minggu 4"], [
-          ["Studi literatur dan pemahaman aturan gacha", "✓", "", "", ""],
-          ["Pengumpulan data dan pembuatan simulasi", "✓", "✓", "", ""],
-          ["Pra-pemrosesan dan pembentukan fitur", "", "✓", "", ""],
-          ["Pemodelan 6 algoritma dan Markov Chain", "", "✓", "✓", ""],
-          ["Evaluasi dan uji data asli", "", "", "✓", ""],
-          ["Deployment aplikasi Streamlit", "", "", "✓", "✓"],
-          ["Penyusunan laporan dan presentasi", "", "", "", "✓"],
-        ], [52, 12, 12, 12, 12]),
-        Space(),
-        H2("3.11 Pembagian Tugas"),
-        TCap("Pembagian tugas anggota kelompok"),
-        TableX(["NIM", "Nama", "Tugas"], TEAM, [24, 30, 46], { leftAll: true }),
-      ]
-    : []),
 ];
 
 // ---------- BAB IV (laporan) ----------
@@ -528,12 +503,10 @@ bab2Start();
 children.push(...bab2());
 setBab(3);
 children.push(...bab3());
-if (!PROP) {
-  setBab(4); children.push(...bab4());
-  setBab(5); children.push(...bab5());
-}
+setBab(4); children.push(...bab4());
+setBab(5); children.push(...bab5());
 children.push(...pustaka());
-if (!PROP) children.push(...lampiran());
+children.push(...lampiran());
 
 // Halaman depan dibuat terakhir: Daftar Tabel/Gambar butuh semua keterangan di isi dokumen.
 const front = [...cover, ...kata, ...L.TOC(), ...L.LIST("tab"), ...L.LIST("fig")];

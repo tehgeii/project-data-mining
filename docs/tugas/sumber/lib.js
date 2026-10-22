@@ -35,11 +35,14 @@ const P = (text, o = {}) =>
     indent: o.noIndent ? undefined : { firstLine: 709 },
     spacing: { line: 360, after: 120 },
   });
+// lineRule dan ukuran huruf tanda paragraf ditulis eksplisit supaya LibreOffice menghitung
+// spasi dari ukuran huruf teks itu sendiri (bukan 12 pt); judul besar jadi tidak saling menimpa
 const Center = (text, o = {}) =>
   new Paragraph({
     children: runs(text, { size: o.size, bold: o.bold }),
+    run: o.size ? { size: o.size } : undefined,
     alignment: AlignmentType.CENTER,
-    spacing: { line: o.line ?? 360, after: o.after ?? 120, before: o.before ?? 0 },
+    spacing: { line: o.line ?? 360, lineRule: d.LineRuleType.AUTO, after: o.after ?? 120, before: o.before ?? 0 },
   });
 const Eq = (text) =>
   new Paragraph({ children: [new TextRun({ text, italics: true })], alignment: AlignmentType.CENTER, spacing: { line: 360, after: 120 } });
