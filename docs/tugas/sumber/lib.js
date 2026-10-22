@@ -71,6 +71,8 @@ const Numbered = (items) => {
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "808080" };
 const borders = { top: border, bottom: border, left: border, right: border };
+const black = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
+const blackBorders = { top: black, bottom: black, left: black, right: black };
 function TableX(headers, rows, widthsPct, o = {}) {
   const total = o.width ?? CONTENT_W;
   const widths = widthsPct.map((p) => Math.round((p / 100) * total));
@@ -80,9 +82,10 @@ function TableX(headers, rows, widthsPct, o = {}) {
   const together = rows.length <= 15;
   const cell = (text, i, head, last = false) =>
     new TableCell({
-      borders,
+      // o.mono: hitam-putih (garis hitam, kepala tabel tanpa warna), dipakai proposal
+      borders: o.mono ? blackBorders : borders,
       width: { size: widths[i], type: WidthType.DXA },
-      shading: head ? { fill: "D9E2F3", type: ShadingType.CLEAR, color: "auto" } : undefined,
+      shading: head && !o.mono ? { fill: "D9E2F3", type: ShadingType.CLEAR, color: "auto" } : undefined,
       margins: { top: 60, bottom: 60, left: 100, right: 100 },
       children: [new Paragraph({ keepNext: together && !last, keepLines: true, alignment: i === 0 || o.leftAll ? AlignmentType.LEFT : AlignmentType.CENTER, spacing: { line: 276 }, children: runs(String(text), { size, bold: head || undefined }) })],
     });

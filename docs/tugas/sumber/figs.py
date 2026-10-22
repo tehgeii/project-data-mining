@@ -196,51 +196,50 @@ def fig_importance(task):
 
 
 # ---------- diagram proposal ----------
-def _box(ax, x, y, w, h, text, fc, ec, color="black", size=9, bold=False, radius=0.02):
-    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={radius}",
-                                fc=fc, ec=ec, linewidth=1.4))
-    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=size, color=color,
-            fontweight="bold" if bold else "normal", linespacing=1.3)
+# Hitam-putih dengan huruf serif, seperti diagram yang digambar sendiri di Word.
+SERIF = {"family": "Liberation Serif"}
+
+
+def _box(ax, x, y, w, h, text, size=10, bold=False, fill="white", round_=False, dashed=False, align="center"):
+    style = "round,pad=0,rounding_size=0.22" if round_ else "square,pad=0"
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=style, fc=fill, ec="black", linewidth=1.0,
+                                linestyle="--" if dashed else "-"))
+    tx = x + w / 2 if align == "center" else x + 0.12
+    ax.text(tx, y + h / 2, text, ha=align, va="center", fontsize=size, color="black", linespacing=1.35,
+            fontweight="bold" if bold else "normal", fontdict=SERIF)
 
 
 def _arrow(ax, x0, y0, x1, y1):
-    ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops={"arrowstyle": "-|>", "color": "#333333", "lw": 1.4})
+    ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops={"arrowstyle": "-|>", "color": "black", "lw": 1.0})
 
 
 def fig_petajalan():
     """Peta jalan penelitian 14 minggu: rintisan, fundamental, terapan."""
     stages = [
-        ("Minggu 1–3", "Penelitian\nRintisan", BLUE, [
-            "Pembentukan kelompok\ndan pemilihan topik",
-            "Studi literatur gacha,\npity, dan klasifikasi",
-            "Mempelajari aturan\nbanner Zenless Zone Zero",
-        ], "Topik, rumusan masalah,\nrancangan penelitian"),
-        ("Minggu 4–7", "Penelitian\nFundamental", ORANGE, [
-            "Pengambilan riwayat\ngacha pemain asli",
-            "Simulasi Monte Carlo\ndan pra-pemrosesan",
-            "Pembentukan fitur\ndan penyusunan proposal",
-        ], "Dataset siap olah\ndan proposal (UTS)"),
-        ("Minggu 8–14", "Penelitian\nTerapan", GREEN, [
-            "Grid search dan pelatihan\nenam algoritma",
-            "Evaluasi, uji signifikansi,\nanalisis soft pity",
-            "Aplikasi Streamlit,\nlaporan, dan presentasi",
-        ], "Model terbaik, aplikasi web,\nlaporan akhir (UAS)"),
+        ("Minggu 1-3", "Penelitian Rintisan", [
+            "Pembentukan kelompok", "Pemilihan topik", "Studi literatur", "Mempelajari aturan gacha",
+        ], "Topik dan rancangan\npenelitian"),
+        ("Minggu 4-7", "Penelitian Fundamental", [
+            "Pengambilan data riwayat", "Pembuatan data simulasi", "Pra-pemrosesan data", "Penyusunan proposal",
+        ], "Dataset dan proposal\n(UTS)"),
+        ("Minggu 8-14", "Penelitian Terapan", [
+            "Grid search dan pelatihan", "Evaluasi dan uji signifikansi", "Pembuatan aplikasi web", "Laporan dan presentasi",
+        ], "Model, aplikasi web,\nlaporan akhir (UAS)"),
     ]
-    fig, ax = plt.subplots(figsize=(9, 5.0), dpi=200)
+    fig, ax = plt.subplots(figsize=(6.6, 2.86), dpi=300)  # ukuran asli ±17 cm: huruf tetap terbaca di kertas
     ax.set_xlim(0, 9)
-    ax.set_ylim(0, 5)
+    ax.set_ylim(0, 3.9)
     ax.axis("off")
-    w, gap = 2.7, 0.3
-    for i, (week, title, color, items, output) in enumerate(stages):
-        x = 0.15 + i * (w + gap)
-        _box(ax, x, 4.45, w, 0.42, week, color, color, color="white", size=10, bold=True)
-        _box(ax, x, 3.55, w, 0.75, title, "white", color, color=color, size=11, bold=True)
-        for k, item in enumerate(items):
-            _box(ax, x + 0.1, 2.75 - k * 0.72, w - 0.2, 0.6, item, "#F4F6FA", "#C9D2E3", size=8.5)
-        _arrow(ax, x + w / 2, 1.3, x + w / 2, 1.05)
-        _box(ax, x, 0.15, w, 0.85, "Luaran:\n" + output, color, color, color="white", size=8.5, bold=True)
+    w, gap = 2.6, 0.5
+    for i, (week, title, items, output) in enumerate(stages):
+        x = 0.1 + i * (w + gap)
+        _box(ax, x, 3.05, w, 0.75, f"{title}\n({week})", size=10.5, bold=True, fill="#E6E6E6")
+        _box(ax, x, 1.3, w, 1.4, "\n".join(f"- {t}" for t in items), size=9.5, align="left")
+        _box(ax, x, 0.1, w, 0.85, output, size=9.5, bold=True)
+        _arrow(ax, x + w / 2, 3.05, x + w / 2, 2.72)
+        _arrow(ax, x + w / 2, 1.3, x + w / 2, 0.97)
         if i < len(stages) - 1:
-            _arrow(ax, x + w + 0.02, 3.92, x + w + gap - 0.02, 3.92)
+            _arrow(ax, x + w + 0.03, 3.42, x + w + gap - 0.03, 3.42)
     fig.tight_layout(pad=0.2)
     fig.savefig(FIG / "fig_petajalan.png")
     plt.close(fig)
@@ -248,30 +247,29 @@ def fig_petajalan():
 
 def fig_metode():
     """Alur metode yang diusulkan, dari pengambilan data sampai aplikasi."""
-    fig, ax = plt.subplots(figsize=(9, 6.2), dpi=200)
+    fig, ax = plt.subplots(figsize=(6.6, 4.55), dpi=300)
     ax.set_xlim(0, 9)
     ax.set_ylim(0, 6.2)
     ax.axis("off")
-    light, line = "#EAF0FB", BLUE
-    _box(ax, 3.6, 5.6, 1.8, 0.45, "Mulai", "white", "#333333", size=10, bold=True, radius=0.2)
-    _box(ax, 0.2, 4.35, 2.6, 0.85, "Riwayat gacha asli\n(skrip PowerShell, UIGF,\ninput manual)", light, line, size=8.5)
-    _box(ax, 6.2, 4.35, 2.6, 0.85, "Simulasi Monte Carlo\n(400 akun + 100 akun\nuntuk grid search)", light, line, size=8.5)
-    _box(ax, 3.2, 4.35, 2.6, 0.85, "Pra-pemrosesan:\nfilter banner, hapus duplikat,\nhitung pity & guaranteed", light, line, size=8.5)
-    _box(ax, 3.2, 3.1, 2.6, 0.85, "Pembentukan fitur & target\n(tugas A: pull berikutnya,\ntugas B: dalam 10 pull)", light, line, size=8.5)
-    _box(ax, 0.2, 1.75, 2.6, 0.95, "Markov Chain\n(acuan teori dari\nparameter resmi)", "#FFF4E0", ORANGE, size=8.5)
-    _box(ax, 3.2, 1.75, 2.6, 0.95, "Grid search hyperparameter\nlalu latih 6 algoritma:\nNB, KNN, LR, DT, RF, XGBoost", light, line, size=8.5)
-    _box(ax, 6.2, 1.75, 2.6, 0.95, "Evaluasi: GroupKFold CV,\n8 metrik, uji t terkoreksi,\nuji data asli, pola soft pity", light, line, size=8.5)
-    _box(ax, 6.2, 0.55, 2.6, 0.75, "Deployment aplikasi\nweb Streamlit", "#E6F4EA", GREEN, size=9, bold=True)
-    _box(ax, 3.6, 0.7, 1.8, 0.45, "Selesai", "white", "#333333", size=10, bold=True, radius=0.2)
+    _box(ax, 3.6, 5.6, 1.8, 0.45, "Mulai", round_=True)
+    _box(ax, 0.2, 4.35, 2.6, 0.85, "Data riwayat gacha asli\n(3 akun)")
+    _box(ax, 6.2, 4.35, 2.6, 0.85, "Data simulasi\nMonte Carlo")
+    _box(ax, 3.2, 4.35, 2.6, 0.85, "Pra-pemrosesan data")
+    _box(ax, 3.2, 3.1, 2.6, 0.85, "Pembentukan fitur\ndan target")
+    _box(ax, 0.2, 1.75, 2.6, 0.95, "Model Markov Chain\n(acuan teori)", dashed=True)
+    _box(ax, 3.2, 1.75, 2.6, 0.95, "Grid search dan\npelatihan 6 algoritma")
+    _box(ax, 6.2, 1.75, 2.6, 0.95, "Evaluasi dan\nuji signifikansi")
+    _box(ax, 6.2, 0.55, 2.6, 0.75, "Deployment\n(aplikasi Streamlit)")
+    _box(ax, 3.6, 0.7, 1.8, 0.45, "Selesai", round_=True)
     _arrow(ax, 4.5, 5.6, 4.5, 5.22)
     _arrow(ax, 2.8, 4.78, 3.18, 4.78)
     _arrow(ax, 6.2, 4.78, 5.82, 4.78)
     _arrow(ax, 4.5, 4.35, 4.5, 3.97)
     _arrow(ax, 4.5, 3.1, 4.5, 2.72)
     # Markov tidak ikut dilatih; hasilnya hanya dibandingkan saat evaluasi
-    ax.plot([1.5, 1.5, 6.6], [1.75, 1.45, 1.45], color="#333333", lw=1.4)
+    ax.plot([1.5, 1.5, 6.6], [1.75, 1.45, 1.45], color="black", lw=1.0, linestyle="--")
     _arrow(ax, 6.6, 1.45, 6.6, 1.73)
-    ax.text(4.05, 1.5, "pembanding", ha="center", va="bottom", fontsize=8, color="#555555", style="italic")
+    ax.text(4.05, 1.5, "pembanding", ha="center", va="bottom", fontsize=9, style="italic", fontdict=SERIF)
     _arrow(ax, 5.8, 2.22, 6.18, 2.22)
     _arrow(ax, 7.5, 1.75, 7.5, 1.32)
     _arrow(ax, 6.2, 0.92, 5.42, 0.92)

@@ -6,7 +6,7 @@ penomoran tabel/gambar).
 
 | File | Isi |
 |---|---|
-| `proposal.js` | Isi proposal UTS, mengikuti format contoh proposal dari dosen (Letter, margin 3 cm, spasi 1,15, pustaka bernomor) |
+| `proposal.js` | Isi proposal UTS, mengikuti format contoh proposal dari dosen (Letter, margin 3 cm, spasi 1,15, pustaka bernomor, tabel dan diagram hitam-putih) |
 | `gen.js` | Isi laporan akhir UAS |
 | `slides.js` | Isi slide UTS dan UAS beserta catatan pembicara |
 | `rep.js` | Membaca `models/report.json` dan memformat angka gaya Indonesia (0,9108 · 1.209) untuk tabel dan teks hasil |
