@@ -2,8 +2,8 @@
 
 Kode sumber proyek **ZZZ Gacha Predictor** dilisensikan dengan [lisensi MIT](LICENSE).
 
-Copyright (c) 2026–sekarang **Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii))**,
-Syafiq Yahya, Gastiadirrijal Rafi M, Zabrina Miftah Z, dan Rayya Hasya Tamimi
+Copyright (c) 2026–sekarang **Dafi Hauzan Atsillah Hoenarko ([@tehgeii](https://github.com/tehgeii))**,
+Syafiq Yahya, Gastiadirrijal Rafi Maulana, Zabrina Miftah Zulaikha, dan Rayya Hasya Tamimi
 (Kelompok 6, Kelas A11.4502, mata kuliah Penambangan Data, Universitas Dian Nuswantoro).
 
 ## Yang tidak termasuk lisensi MIT

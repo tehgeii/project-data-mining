@@ -14,9 +14,9 @@ const APP = "https://project-data-mining-zzz.streamlit.app";
 const REPO = "https://github.com/tehgeii/project-data-mining";
 const TEAM = [
   ["Syafiq Yahya", "A11.2024.16004"],
-  ["Dafi Hauzan A.H", "A11.2024.15851"],
-  ["Gastiadirrijal Rafi M", "A11.2024.15842"],
-  ["Zabrina Miftah Z", "A11.2024.15826"],
+  ["Dafi Hauzan Atsillah Hoenarko", "A11.2024.15851"],
+  ["Gastiadirrijal Rafi Maulana", "A11.2024.15842"],
+  ["Zabrina Miftah Zulaikha", "A11.2024.15826"],
   ["Rayya Hasya Tamimi", "A11.2024.15804"],
 ];
 // pembagian tugas per tahapan (Subbab 2.7); sesuaikan bila pembagian kelompok berubah
@@ -26,8 +26,8 @@ const TUGAS = [
   ["Menyusun proposal", [ZABRINA, RAYYA, SYAFIQ]],
   ["Submit proposal", [SYAFIQ]],
   ["Mengumpulkan dataset", [DAFI]],
-  ["Eksperimen (grid search, pelatihan, evaluasi)", [DAFI]],
-  ["Analisa hasil eksperimen", [DAFI, ZABRINA, RAYYA]],
+  ["Eksperimen dan pemodelan", [DAFI]],
+  ["Analisis hasil eksperimen", [DAFI, ZABRINA, RAYYA]],
   ["Pembuatan aplikasi Streamlit", [DAFI]],
   ["Menyusun slide dan presentasi", [GASTI, SYAFIQ]],
   ["Menyusun laporan akhir", [ZABRINA, RAYYA]],
@@ -115,10 +115,12 @@ const posA = X.pct(X.A.dataset.sim_positive_rate), posB = X.pct(X.B.dataset.sim_
 // lineRule "auto" dan ukuran huruf tanda paragraf ditulis eksplisit; tanpa itu LibreOffice
 // menghitung spasi 1,15 dari huruf 12 pt sehingga baris judul 16 pt saling menimpa
 const coverText = (text, size, o = {}) => new Paragraph({ alignment: AlignmentType.CENTER, run: { size, bold: o.bold ?? true }, spacing: { line: LINE, lineRule: d.LineRuleType.AUTO, after: 0, before: o.before ?? 0 }, children: [new TextRun({ text, bold: o.bold ?? true, size })] });
+// kolom nama dibuat lebar supaya nama lengkap (huruf 14 pt) tidak terpotong ke baris kedua
+const CW = [600, 5000, 2400];
 const coverTeam = new Table({
-  width: { size: 7134, type: WidthType.DXA }, columnWidths: [734, 4105, 2295], indent: { size: 1129, type: WidthType.DXA }, borders: noBorders,
+  width: { size: 8000, type: WidthType.DXA }, columnWidths: CW, indent: { size: (W - 8000) / 2, type: WidthType.DXA }, borders: noBorders,
   rows: TEAM.map(([name, nim], i) => new TableRow({ children: [`${i + 1}.`, name, nim].map((t, k) => new TableCell({
-    borders: noBorders, width: { size: [734, 4105, 2295][k], type: WidthType.DXA },
+    borders: noBorders, width: { size: CW[k], type: WidthType.DXA },
     children: [new Paragraph({ spacing: { line: LINE, after: 0 }, children: [new TextRun({ text: t, size: 28 })] })],
   })) })),
 });
@@ -253,7 +255,7 @@ const bab2 = [
 ];
 
 // tabel tanpa garis: a. | tugas | : | nama-nama (seperti contoh dosen)
-const TW = [500, 4000, 300, W - 4800];
+const TW = [500, 4400, 300, W - 5200];
 const tugasTable = new Table({
   width: { size: W, type: WidthType.DXA }, columnWidths: TW, borders: noBorders,
   rows: TUGAS.map(([task, names], i) => new TableRow({ cantSplit: true, children: [
@@ -265,7 +267,7 @@ const tugasTable = new Table({
 });
 
 // Gantt 14 minggu
-const GW = [450, 3300, ...Array(14).fill(Math.floor((W - 3750) / 14))];
+const GW = [450, 3800, ...Array(14).fill(Math.floor((W - 4250) / 14))];
 GW[GW.length - 1] += W - GW.reduce((a, b) => a + b, 0);
 const gCell = (text, k, o = {}) => new TableCell({
   borders: lines, width: { size: GW[k], type: WidthType.DXA }, columnSpan: o.span, rowSpan: o.rows,

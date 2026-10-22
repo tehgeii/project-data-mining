@@ -12,9 +12,9 @@ const APP = "https://project-data-mining-zzz.streamlit.app";
 const REPO = "https://github.com/tehgeii/project-data-mining";
 const TEAM = [
   ["A11.2024.16004", "Syafiq Yahya", "Ketua kelompok, presentasi hasil"],
-  ["A11.2024.15851", "Dafi Hauzan A.H", "Pengembang aplikasi, pengumpulan dan pengujian data"],
-  ["A11.2024.15842", "Gastiadirrijal Rafi M", "Penyusun slide presentasi"],
-  ["A11.2024.15826", "Zabrina Miftah Z", "Penyusun proposal dan laporan"],
+  ["A11.2024.15851", "Dafi Hauzan Atsillah Hoenarko", "Pengembang aplikasi, pengumpulan dan pengujian data"],
+  ["A11.2024.15842", "Gastiadirrijal Rafi Maulana", "Penyusun slide presentasi"],
+  ["A11.2024.15826", "Zabrina Miftah Zulaikha", "Penyusun proposal dan laporan"],
   ["A11.2024.15804", "Rayya Hasya Tamimi", "Penyusun proposal dan laporan"],
 ];
 
@@ -30,7 +30,7 @@ const cover = [
   C("Disusun untuk memenuhi Ujian Akhir Semester (UAS)", { after: 0 }),
   C("mata kuliah **Penambangan Data**", { after: 240 }),
   C("Kelas **A11.4502** · Kelompok **6**", { after: 160 }),
-  TableX(["NIM", "Nama", "Peran"], TEAM, [26, 32, 42], { width: 7600, leftAll: true, size: 22 }),
+  TableX(["NIM", "Nama", "Peran"], TEAM, [22, 38, 40], { width: 7938, leftAll: true, size: 21 }),
   C("Dosen Pengampu:", { before: 360, after: 0 }),
   C("**Ardytha Luthfiarta, M.Kom, MCS**", { after: 480 }),
   C("**PROGRAM STUDI TEKNIK INFORMATIKA – S1**", { after: 0 }),

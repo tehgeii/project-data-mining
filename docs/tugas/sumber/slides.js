@@ -89,9 +89,9 @@ const gapSim = X.num((X.val(cvB, "XGBoost", "accuracy") - X.val(cvB, X.BASELINE,
 const gapReal = X.num((Math.max(...X.ML.map((n) => rB[n].accuracy)) - rB[X.BASELINE].accuracy) * 100, 1);
 const TEAM = [["NIM", "Nama", "Peran"],
   ["A11.2024.16004", "Syafiq Yahya", "Ketua kelompok, presentasi hasil"],
-  ["A11.2024.15851", "Dafi Hauzan A.H", "Pengembang aplikasi, pengumpulan & pengujian data"],
-  ["A11.2024.15842", "Gastiadirrijal Rafi M", "Penyusun slide presentasi"],
-  ["A11.2024.15826", "Zabrina Miftah Z", "Penyusun proposal & laporan"],
+  ["A11.2024.15851", "Dafi Hauzan Atsillah Hoenarko", "Pengembang aplikasi, pengumpulan & pengujian data"],
+  ["A11.2024.15842", "Gastiadirrijal Rafi Maulana", "Penyusun slide presentasi"],
+  ["A11.2024.15826", "Zabrina Miftah Zulaikha", "Penyusun proposal & laporan"],
   ["A11.2024.15804", "Rayya Hasya Tamimi", "Penyusun proposal & laporan"]];
 const APP = "project-data-mining-zzz.streamlit.app";
 
@@ -118,7 +118,7 @@ function cover(kind) {
 }
 function team() {
   const s = base("Anggota Kelompok 6", "Tim");
-  table(s, TEAM, M, 1.8, 12.1, [2.4, 3.4, 6.3], { size: 15, rowH: 0.62, left: true });
+  table(s, TEAM, M, 1.8, 12.1, [2.2, 3.7, 6.2], { size: 15, rowH: 0.62, left: true });
   s.addNotes("Perkenalan anggota (±1 menit). Bacakan nama dan peran setiap anggota. Ketua: Syafiq Yahya. Pengembang aplikasi: Dafi. Slide: Gastiadirrijal. Proposal dan laporan: Zabrina dan Rayya.");
 }
 function latar() {

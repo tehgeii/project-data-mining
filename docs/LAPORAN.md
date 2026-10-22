@@ -445,7 +445,7 @@ Jadi lonjakan peluang yang tidak diumumkan resmi **bisa ditemukan dari data asli
 | NIM | Nama | Peran |
 |---|---|---|
 | A11.2024.16004 | Syafiq Yahya | Ketua kelompok, mempresentasikan hasil proyek |
-| A11.2024.15851 | Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii)) | Pengembang aplikasi, pengumpulan dan pengujian data asli |
-| A11.2024.15842 | Gastiadirrijal Rafi M | Penyusun slide presentasi |
-| A11.2024.15826 | Zabrina Miftah Z | Penyusun proposal dan laporan |
+| A11.2024.15851 | Dafi Hauzan Atsillah Hoenarko ([@tehgeii](https://github.com/tehgeii)) | Pengembang aplikasi, pengumpulan dan pengujian data asli |
+| A11.2024.15842 | Gastiadirrijal Rafi Maulana | Penyusun slide presentasi |
+| A11.2024.15826 | Zabrina Miftah Zulaikha | Penyusun proposal dan laporan |
 | A11.2024.15804 | Rayya Hasya Tamimi | Penyusun proposal dan laporan |

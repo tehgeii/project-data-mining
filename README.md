@@ -15,9 +15,9 @@ Chain sebagai acuan teori.
 | NIM | Nama | Peran |
 |---|---|---|
 | A11.2024.16004 | Syafiq Yahya | Ketua kelompok, mempresentasikan hasil proyek |
-| A11.2024.15851 | Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii)) | Pengembang aplikasi, pengumpulan dan pengujian data asli |
-| A11.2024.15842 | Gastiadirrijal Rafi M | Penyusun slide presentasi |
-| A11.2024.15826 | Zabrina Miftah Z | Penyusun proposal dan laporan |
+| A11.2024.15851 | Dafi Hauzan Atsillah Hoenarko ([@tehgeii](https://github.com/tehgeii)) | Pengembang aplikasi, pengumpulan dan pengujian data asli |
+| A11.2024.15842 | Gastiadirrijal Rafi Maulana | Penyusun slide presentasi |
+| A11.2024.15826 | Zabrina Miftah Zulaikha | Penyusun proposal dan laporan |
 | A11.2024.15804 | Rayya Hasya Tamimi | Penyusun proposal dan laporan |
 
 ## Fitur
@@ -122,10 +122,10 @@ rate-up, dan daftar S standar. Setelah mengubahnya, latih ulang model dengan
 ## Lisensi
 
 Kode dirilis dengan [lisensi MIT](LICENSE).
-Copyright (c) 2026–sekarang **Dafi Hauzan A.H ([@tehgeii](https://github.com/tehgeii))**
+Copyright (c) 2026–sekarang **Dafi Hauzan Atsillah Hoenarko ([@tehgeii](https://github.com/tehgeii))**
 dan anggota Kelompok 6 (lihat tabel [Tim](#tim)).
 
 Nama dan aset *Zenless Zone Zero*, logo Universitas Dian Nuswantoro, dan data
 pemain tidak termasuk lisensi MIT. Rinciannya ada di [`NOTICE.md`](NOTICE.md).
 
-Dikembangkan oleh **Dafi Hauzan A.H** ([@tehgeii](https://github.com/tehgeii)).
+Dikembangkan oleh **Dafi Hauzan Atsillah Hoenarko** ([@tehgeii](https://github.com/tehgeii)).
