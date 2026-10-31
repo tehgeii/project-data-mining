@@ -96,7 +96,10 @@ const TEAM = [["NIM", "Nama", "Peran"],
 const APP = "project-data-mining-zzz.streamlit.app";
 
 // ===== slide bersama =====
-function cover(kind) {
+// judul proposal UTS mengikuti proposal yang dikumpulkan kelompok; laporan UAS masih memakai judul lama
+const JUDUL_UTS = "Komparasi Algoritma Naive Bayes, K-Nearest Neighbors, Logistic Regression, Decision Tree, Random Forest, dan XGBoost untuk Prediksi Perolehan S-Rank pada Sistem Gacha Zenless Zone Zero Berbasis Streamlit";
+const JUDUL_UAS = "Perbandingan Algoritma Klasifikasi untuk Memprediksi Peluang Mendapatkan S-Rank pada Sistem Gacha Zenless Zone Zero Berbasis Web";
+function cover(kind, judul = JUDUL_UAS, dur = "±1 menit") {
   const s = pres.addSlide(); n++;
   s.background = { color: C.bg };
   s.addShape(pres.shapes.OVAL, { x: 9.3, y: 1.2, w: 5.2, h: 5.2, fill: { color: C.acc, transparency: 88 }, line: { color: C.acc, transparency: 60, width: 1 } });
@@ -106,7 +109,7 @@ function cover(kind) {
   s.addImage({ path: `${FIG}/logo_udinus_round.png`, x: M, y: 0.4, w: 1.0, h: 1.0, altText: "Logo Universitas Dian Nuswantoro" });
   T(s, kind, { x: M + 1.2, y: 0.7, w: 7.4, h: 0.4, fontSize: 14, bold: true, color: C.acc, charSpacing: 3 });
   T(s, "ZZZ Gacha Predictor", { x: M, y: 1.5, w: 8.6, h: 1.1, fontSize: 48, bold: true, fontFace: HF });
-  T(s, "Perbandingan Algoritma Klasifikasi untuk Memprediksi Peluang Mendapatkan S-Rank pada Sistem Gacha Zenless Zone Zero Berbasis Web", { x: M, y: 2.7, w: 8.4, h: 1.3, fontSize: 18, color: C.mut, valign: "top" });
+  T(s, judul, { x: M, y: 2.7, w: 8.4, h: 1.5, fontSize: judul.length > 150 ? 15 : 18, color: C.mut, valign: "top" });
   T(s, [
     { text: "Kelompok 6 · Kelas A11.4502", options: { bold: true, breakLine: true } },
     { text: "Mata kuliah Penambangan Data", options: { breakLine: true } },
@@ -114,12 +117,12 @@ function cover(kind) {
     { text: "Universitas Dian Nuswantoro · 2026", options: {} },
   ], { x: M, y: 4.5, w: 8, h: 1.4, fontSize: 15, color: C.txt, valign: "top", paraSpaceAfter: 4 });
   T(s, APP, { x: M, y: 6.3, w: 8, h: 0.4, fontSize: 14, color: C.blue });
-  s.addNotes(`Pembukaan (±1 menit). Salam, perkenalkan Kelompok 6 kelas A11.4502, mata kuliah Penambangan Data dengan dosen Bapak Ardytha Luthfiarta. Sebutkan judul: ${kind === "PROPOSAL PROYEK AKHIR · UTS" ? "ini adalah presentasi proposal proyek akhir" : "ini adalah presentasi laporan akhir proyek"} tentang memprediksi peluang S-Rank di gacha Zenless Zone Zero. Sampaikan bahwa aplikasinya bisa dibuka di HP lewat link di layar.`);
+  s.addNotes(`Pembukaan (${dur}). Salam, perkenalkan Kelompok 6 kelas A11.4502, mata kuliah Penambangan Data dengan dosen Bapak Ardytha Luthfiarta. Sebutkan judul: ${kind === "PROPOSAL PROYEK AKHIR · UTS" ? "ini adalah presentasi proposal proyek akhir" : "ini adalah presentasi laporan akhir proyek"} tentang memprediksi peluang S-Rank di gacha Zenless Zone Zero. Sampaikan bahwa aplikasinya bisa dibuka di HP lewat link di layar.`);
 }
-function team() {
+function team(dur = "±1 menit") {
   const s = base("Anggota Kelompok 6", "Tim");
   table(s, TEAM, M, 1.8, 12.1, [2.2, 3.7, 6.2], { size: 15, rowH: 0.62, left: true });
-  s.addNotes("Perkenalan anggota (±1 menit). Bacakan nama dan peran setiap anggota. Ketua: Syafiq Yahya. Pengembang aplikasi: Dafi. Slide: Gastiadirrijal. Proposal dan laporan: Zabrina dan Rayya.");
+  s.addNotes(`Perkenalan anggota (${dur}). Bacakan nama dan peran setiap anggota. Ketua: Syafiq Yahya. Pengembang aplikasi: Dafi. Slide: Gastiadirrijal. Proposal dan laporan: Zabrina dan Rayya.`);
 }
 function latar() {
   const s = base("“Pity-ku 70. Berapa peluang dapat S?”", "Latar belakang");
@@ -259,32 +262,52 @@ function penutup(text) {
 }
 
 // ===== dek UTS =====
+// Isi mengikuti proposal UTS yang dikumpulkan kelompok. Panduan UTS: video 5-10 menit, jadi naskah dibuat ±9,5 menit.
 function uts() {
-  cover("PROPOSAL PROYEK AKHIR · UTS");
-  team(); latar(); alasan(); rumusan();
-  { const s = base("Batasan dan kebaruan", "Pendahuluan");
-    T(s, "Batasan", { x: M, y: 1.8, w: 5.9, h: 0.4, fontSize: 20, bold: true, color: C.acc, fontFace: HF });
-    bullets(s, ["Hanya banner Agent & W-Engine terbatas", "Yang diprediksi hanya S-Rank", "Soft pity: estimasi komunitas, diperiksa dengan data asli", "Data asli: akun anggota & teman (anonim)", "Ambil riwayat otomatis: PC Windows"], M, 2.3, 5.9, 4.3, 16);
-    T(s, "Kebaruan", { x: 6.9, y: 1.8, w: 5.9, h: 0.4, fontSize: 20, bold: true, color: C.blue, fontFace: HF });
-    bullets(s, ["Soft pity digali langsung dari data pemain asli", "6 algoritma dibandingkan dengan acuan teori Markov Chain", "Evaluasi anti-bocor: dibagi per akun/siklus, nested CV, uji t terkoreksi", "Hasilnya langsung dipakai di aplikasi web"], 6.9, 2.3, 5.8, 4.3, 16);
-    s.addNotes("Batasan dan kebaruan (±1,5 menit). Bacakan batasan: hanya dua banner terbatas dan hanya S-Rank. Lalu empat kebaruan sesuai Subbab 1.4 proposal: soft pity digali dari data pemain asli; keenam algoritma dibandingkan dengan acuan teori Markov, bukan hanya antaralgoritma; evaluasinya dirancang supaya tidak bocor, yaitu dibagi per akun atau per siklus pity, hyperparameter dipilih tanpa data uji, dan selisih diuji dengan uji t terkoreksi; dan hasilnya langsung dipakai di aplikasi web."); }
-  { const s = base("Penelitian terdahulu", "Telaah pustaka");
-    card(s, M, 1.8, 3.9, 4.7, "Gacha & loot box", "Zendle & Cairns (2018): belanja loot box berkaitan dengan masalah judi.\nXiao dkk. (2024): peluang loot box sering tidak tampil jelas.\nChen & Fang (2023): model matematis gacha dan pity dari sisi pengembang.", C.acc, { bsize: 16 });
-    card(s, M + 4.1, 1.8, 3.9, 4.7, "Studi algoritma", "Maulidah (2023): XGBoost terbaik (92,36%) di data deposito bank.\nRahmat dkk. (2023): Random Forest terbaik (95%) di data kepuasan penumpang.\nGrinsztajn dkk. (2022): model pohon unggul di data tabular.", C.blue, { bsize: 16 });
-    card(s, M + 8.2, 1.8, 3.9, 4.7, "Celah yang diisi", "Belum ada yang memperkirakan peluang, khususnya soft pity, dari data riwayat gacha pemain. Hasil perbandingan algoritma juga berbeda-beda per data, jadi perlu diuji langsung di kasus gacha.", C.green, { bsize: 16 });
-    s.addNotes("Penelitian terdahulu (±1,5 menit). Kelompokkan jadi tiga. Pertama, penelitian gacha dan loot box: kebanyakan membahas perilaku pemain dan regulasi, misalnya kaitan loot box dengan judi dan peluang yang tidak ditampilkan jelas; yang memodelkan gacha secara matematis melihatnya dari sisi pendapatan pengembang. Kedua, penelitian perbandingan algoritma: hasilnya berbeda-beda, kadang XGBoost yang terbaik, kadang Random Forest, tetapi model berbasis pohon umumnya kuat di data tabel. Ketiga, celahnya: belum ada yang memperkirakan peluang dari data riwayat gacha pemain, dan karena hasil algoritma bergantung pada data, perbandingannya perlu diuji langsung di kasus gacha. Daftar lengkapnya ada di Tabel 2.1 proposal."); }
-  aturan(); markov(); algoritma(); metrik(); crisp(); data(); fitur(); skenario();
-  screenshot("Rancangan aplikasi web", "Rancangan", "app_kalkulator_top.png",
-    ["Beranda: penjelasan & aturan banner", "Import Data: PowerShell, upload UIGF, input manual, data contoh", "Kalkulator Peluang: Markov Chain + prediksi 6 algoritma", "Statistik Riwayat: pity tiap S, menang 50/50", "Perbandingan Algoritma: metrik, kurva, confusion matrix", "Tema gelap, nyaman di HP"],
-    "Rancangan aplikasi (±1,5 menit). Aplikasi dibangun dengan Streamlit, materi deployment di kuliah. Jelaskan enam halaman. Kalau memungkinkan, buka link aplikasinya dan tunjukkan halaman kalkulator secara langsung.");
-  { const s = base("Hasil awal prototipe (tugas B)", "Progres");
-    chartBars(s, NAMES, [{ name: "Simulasi (5-fold CV)", values: ACC_SIM, color: C.blue }, { name: `Data asli (${X.RD.accounts} akun)`, values: ACC_REAL, color: C.acc }], M, 1.7, 8.4, 5.1, { min: 80, max: 96, title: "Accuracy (%)" });
-    card(s, 9.3, 1.8, 3.4, 4.8, "Temuan awal", `Prototipe sudah jalan; pity akun asli sama dengan di game. Model pohon & KNN ±${pctRound(X.val(cvB, "XGBoost", "accuracy"))}% (simulasi) dan ±${pctRound(rB.XGBoost.accuracy)}% (data asli). Data asli juga memperlihatkan lonjakan S Agent mulai pull ke-74, sesuai estimasi soft pity.`, C.green, { bsize: 15 });
-    s.addNotes(`Hasil awal (±2 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Validasi: saat dicek, pity akun asli 70 dari 90 dan 46 dari 80 sama persis dengan di game. Hasil awal tugas B: model pohon dan KNN sekitar ${pctRound(X.val(cvB, "XGBoost", "accuracy"))} persen di simulasi dan ${pctRound(rB.XGBoost.accuracy)} persen di data asli, Logistic Regression dan Naive Bayes lebih rendah. Eksperimen latih dan uji dengan data asli saja, ${X.int(rcv.rows)} baris, juga sudah dilakukan: ${realTop[0]} tertinggi sekitar ${pctRound(X.val(rcv.scores, realTop[0], "accuracy"))} persen. Uji coba grid search membuat Naive Bayes membaik, dan uji signifikansi awal menunjukkan selisih antaralgoritma di data asli yang masih sedikit belum bermakna. Analisis awal data asli memperlihatkan laju S Agent hampir nol sampai pull ke-73 lalu melonjak mulai pull ke-74, sesuai estimasi soft pity. Hasil lengkap akan dibahas di laporan akhir.`); }
-  { const s = base("Peta jalan 14 minggu", "Rencana");
-    img(s, "fig_petajalan.png", M, 1.7, 12.1, 5.1);
-    s.addNotes("Peta jalan (±1 menit). Penelitian dibagi tiga tahap selama 14 minggu. Minggu 1 sampai 3 penelitian rintisan: membentuk kelompok, memilih topik, studi literatur, dan mempelajari aturan banner. Minggu 4 sampai 7 penelitian fundamental: mengambil riwayat gacha asli, membuat simulasi, pra-pemrosesan, dan menyusun proposal ini. Minggu 8 sampai 14 penelitian terapan: grid search, pelatihan enam algoritma, evaluasi dan uji signifikansi, analisis soft pity, aplikasi, laporan akhir, dan presentasi. Sebutkan bahwa prototipe aplikasi sudah berjalan lebih awal, jadi sisa pekerjaannya penyempurnaan evaluasi dan laporan akhir. Jadwal per minggunya ada di akhir Bab II proposal."); }
-  penutup("Ada pertanyaan? Silakan coba aplikasinya langsung:").addNotes("Penutup (±1 menit). Ucapkan terima kasih, ajak membuka aplikasi lewat link, lalu buka sesi tanya jawab.");
+  cover("PROPOSAL PROYEK AKHIR · UTS", JUDUL_UTS, "±0,5 menit");
+  team("±0,5 menit");
+  { const s = base("Soft pity ada, tapi tidak pernah diumumkan", "Latar belakang");
+    T(s, "Gacha ZZZ memakai sistem pity: makin lama tidak dapat S-Rank, peluangnya naik (soft pity) sampai pasti dapat (hard pity). HoYoverse tidak mengumumkan kapan soft pity mulai dan seberapa cepat peluangnya naik.", { x: M, y: 1.7, w: 12.1, h: 1.0, fontSize: 17, color: C.mut, valign: "top" });
+    stat(s, M, 3.0, 3.8, "0,6%", "peluang dasar S-Rank Agent per pull (W-Engine 1%)");
+    stat(s, 4.75, 3.0, 3.8, "90", "hard pity Agent: S-Rank pasti didapat (W-Engine 80)", C.blue);
+    stat(s, 8.9, 3.0, 3.8, "1,44%", "rata-rata kalau peluangnya datar sampai hard pity, padahal resminya 1,6% → soft pity pasti ada", C.green);
+    T(s, "Bentuk kenaikannya hanya bisa digali dari data riwayat gacha → data mining.", { x: M, y: 5.6, w: 12.1, h: 0.5, fontSize: 17, bold: true, color: C.acc });
+    s.addNotes("Latar belakang (±1,5 menit). Zenless Zone Zero memakai sistem gacha. Peluang dasar S-Rank cuma 0,6 persen untuk Agent dan 1 persen untuk W-Engine, dan pasti dapat di pull ke-90 atau ke-80. Di antaranya ada soft pity, yaitu peluang yang naik bertahap, tapi HoYoverse tidak pernah mengumumkan kapan mulai dan seberapa cepat naiknya. Buktinya soft pity memang ada: kalau peluangnya datar 0,6 persen sampai hard pity, rata-ratanya cuma 1,44 persen, padahal angka resmi 1,6 persen. Di W-Engine juga sama, 1,81 persen dibanding 2 persen. Karena bentuk kenaikannya tidak diumumkan, polanya harus digali dari data riwayat gacha, dan di situlah data mining dipakai."); }
+  { const s = base("Rumusan masalah", "Masalah");
+    const items = [
+      ["1", "Dataset", `Bagaimana membangun dataset gabungan data riil ${X.RD.accounts} akun (${X.int(X.RD.pulls)} pull) dan simulasi Monte Carlo yang terkalibrasi terhadap consolidated rate resmi?`],
+      ["2", "Kinerja 6 algoritma", "Bagaimana kinerja Naive Bayes, KNN, Logistic Regression, Decision Tree, Random Forest, dan XGBoost pada Tugas A dan Tugas B, dibandingkan baseline dan rantai Markov?"],
+      ["3", "Aplikasi", "Bagaimana menerapkan rantai Markov dan hasil komparasi ke aplikasi web Streamlit untuk membantu pemain?"],
+    ];
+    items.forEach(([i, t, b], k) => card(s, M + k * 4.1, 1.9, 3.9, 4.6, t, b, [C.acc, C.blue, C.green][k], { icon: i, tsize: 19, bsize: 18 }));
+    s.addNotes("Rumusan masalah (±0,5 menit). Ada tiga. Pertama, bagaimana membangun dataset dari data riil tiga akun dan simulasi yang dikalibrasi ke angka resmi. Kedua, bagaimana kinerja enam algoritma klasifikasi pada dua tugas prediksi, dibandingkan baseline dan rantai Markov. Ketiga, bagaimana hasilnya diterapkan di aplikasi web Streamlit."); }
+  { const s = base("Penelitian terdahulu dan kebaruan", "Telaah pustaka");
+    card(s, M, 1.8, 5.9, 4.9, "Penelitian terdahulu", "Drummond & Sauer (2018), Zendle & Cairns (2018): loot box mirip judi dan terkait belanja bermasalah.\nLakić dkk. (2023): pengeluaran gacha naik seiring lama bermain.\nPrawida & Wahyuningsih (2023, Udinus): pentingnya penganggaran.\nXiao dkk. (2023): pengungkapan peluang loot box belum memadai.", C.acc, { bsize: 17 });
+    card(s, 6.75, 1.8, 5.95, 4.9, "Kebaruan", "• Objek baru: ZZZ (2024) belum banyak dikaji\n• 6 algoritma dibandingkan dengan rantai Markov dan baseline\n• Dua tugas prediksi: Tugas A (±1,7% positif) dan Tugas B (±16,6%)\n• Evaluasi tanpa kebocoran: data dibagi per akun\n• Hilirisasi: aplikasi Streamlit yang bisa diakses publik", C.green, { bsize: 17 });
+    s.addNotes("Penelitian terdahulu dan kebaruan (±1 menit). Penelitian tentang gacha dan loot box selama ini fokus ke perilaku dan regulasi: loot box mirip judi, pengeluaran naik seiring lama bermain, penelitian di Udinus sendiri menekankan pentingnya penganggaran, dan pengungkapan peluang dari pengembang sering belum memadai. Kebaruan kami ada lima: objeknya Zenless Zone Zero yang masih baru, enam algoritma dibandingkan juga dengan rantai Markov dan baseline, ada dua tugas prediksi dengan tingkat ketidakseimbangan berbeda, evaluasinya tanpa kebocoran karena data dibagi per akun, dan hasilnya diterapkan ke aplikasi yang bisa diakses publik."); }
+  { const s = base("Data: riil + simulasi", "Dataset");
+    card(s, M, 1.8, 3.9, 4.9, "Data riil", `${X.RD.accounts} akun pemain asli, ${X.int(X.RD.pulls)} pull (${X.int(X.B.real_cv.rows)} baris Tugas B).\nDiambil dari menu History di game lewat URL yang disalin skrip PowerShell. URL tidak disimpan.`, C.acc, { bsize: 17 });
+    card(s, M + 4.1, 1.8, 3.9, 4.9, "Simulasi Monte Carlo", `${X.int(X.B.dataset.sim_accounts)} akun (±${Math.round(X.A.dataset.sim_rows / 1000)} ribu pull) + ${X.B.tuning.accounts} akun khusus grid search.\nSoft pity mulai pull ke-74 / ke-65; kenaikannya (±5,3% / 5,5% per pull) dicari dengan biseksi supaya pas 1,6% / 2,0%.`, C.blue, { bsize: 17 });
+    card(s, M + 8.2, 1.8, 3.9, 4.9, "Fitur dan label", `Fitur (kondisi sebelum pull): pity, pity_ratio, guaranteed, jenis banner.\nTugas A: pull berikutnya S-Rank? (±${X.pct(X.A.dataset.sim_positive_rate)})\nTugas B (utama): minimal 1 S-Rank dalam 10 pull? (±${X.pct(X.B.dataset.sim_positive_rate)})`, C.green, { bsize: 17 });
+    s.addNotes(`Dataset (±1 menit). Data riil berasal dari ${X.kata(X.RD.accounts)} akun pemain asli, total ${X.int(X.RD.pulls)} pull, diambil dari menu History di game. Karena S-Rank-nya sedikit, data ditambah simulasi Monte Carlo ${X.int(X.B.dataset.sim_accounts)} akun, plus ${X.B.tuning.accounts} akun terpisah khusus untuk grid search. Di simulasi, soft pity dimulai pull ke-74 untuk Agent dan ke-65 untuk W-Engine, dan kenaikan peluangnya dicari dengan metode biseksi supaya rata-ratanya pas dengan angka resmi 1,6 dan 2 persen. Fiturnya empat: pity, rasio pity, status guaranteed, dan jenis banner. Labelnya dua: Tugas A, apakah pull berikutnya S-Rank, dan Tugas B sebagai tugas utama, apakah dapat minimal satu S-Rank dalam 10 pull.`); }
+  { const s = base("Metode dan algoritma", "Metode");
+    bullets(s, ["Prapemrosesan dan pelabelan Tugas A/B", "Data dibagi per akun: hold-out + cross-validation 5-fold", "Grid search di 100 akun terpisah", "Latih 6 algoritma, bandingkan dengan baseline dan rantai Markov", "8 metrik (accuracy, balanced acc., precision, recall, F1, ROC-AUC, log loss, Brier) + uji t terkoreksi", "Terapkan ke aplikasi Streamlit"], M, 1.8, 6.2, 4.9, 18);
+    table(s, [["Algoritma", "Pendekatan"], ["Naive Bayes", "Probabilistik"], ["KNN", "Berbasis jarak"], ["Logistic Regression", "Linear"], ["Decision Tree", "Pohon tunggal"], ["Random Forest", "Ensemble bagging"], ["XGBoost", "Ensemble boosting"], ["Rantai Markov", "Acuan teori (tanpa pelatihan)"]],
+      7.1, 1.8, 5.6, [2.6, 3.0], { size: 15, rowH: 0.58, boldRows: [7] });
+    s.addNotes("Metode (±1,5 menit). Alurnya mengikuti CRISP-DM. Setelah data diberi label, data dibagi per akun, bukan per baris, supaya pull dari akun yang sama tidak masuk ke data latih dan data uji sekaligus. Pengaturan tiap algoritma dipilih dengan grid search di 100 akun terpisah. Lalu enam algoritma dilatih: Naive Bayes yang probabilistik, KNN yang berbasis jarak, Logistic Regression yang linear, Decision Tree, serta Random Forest dan XGBoost yang berbasis ensemble. Semuanya dibandingkan dengan baseline dan rantai Markov sebagai acuan teori, memakai delapan metrik karena datanya tidak seimbang, dan selisih akurasinya diuji dengan uji t terkoreksi."); }
+  screenshot("Aplikasi web (prototipe)", "Implementasi", "app_kalkulator_top.png",
+    ["Import Data: skrip PowerShell, upload file, input manual", "Kalkulator Peluang: rantai Markov + prediksi 6 algoritma", "Target peluang 50%, 75%, 90%", "Statistik Riwayat dan Perbandingan Algoritma", "Sudah online: " + APP],
+    "Aplikasi (±1 menit). Prototipe sudah berjalan dan bisa dibuka di HP. Ada halaman Import Data dengan tiga cara input, Kalkulator Peluang yang memakai rantai Markov dan menampilkan prediksi keenam algoritma sebagai pembanding, termasuk berapa pull yang dibutuhkan untuk peluang 50, 75, dan 90 persen, serta halaman Statistik Riwayat dan Perbandingan Algoritma. Kalau sempat, tunjukkan langsung aplikasinya.");
+  { const s = base("Hasil yang diharapkan dan target", "Rencana");
+    card(s, M, 1.8, 5.9, 4.9, "Hasil yang diharapkan", "• Di data simulasi, rantai Markov jadi acuan tertinggi\n• Model pohon (DT, RF, XGBoost) mendekati Markov karena bisa menangkap lonjakan soft pity\n• Logistic Regression dan Naive Bayes tertinggal\n• Fitur pity paling berpengaruh, guaranteed hampir tidak", C.blue, { bsize: 18 });
+    card(s, 6.75, 1.8, 5.95, 4.9, "Target capaian", "• Dataset riil dan simulasi, consolidated rate sesuai angka resmi\n• Hasil komparasi 6 algoritma pada Tugas A dan B\n• Aplikasi Streamlit yang online\n• Laporan akhir", C.green, { bsize: 18 });
+    s.addNotes("Hasil yang diharapkan (±1 menit). Di data simulasi, rantai Markov diharapkan jadi acuan tertinggi karena datanya dibuat dari aturan yang sama. Algoritma berbasis pohon diperkirakan bisa mendekati Markov karena mampu menangkap lonjakan soft pity, sedangkan Logistic Regression dan Naive Bayes diperkirakan tertinggal. Fitur pity diharapkan paling berpengaruh, sedangkan guaranteed hampir tidak, karena status ini hanya menentukan jenis S-Rank, bukan peluang munculnya. Targetnya: dataset riil dan simulasi, hasil komparasi keenam algoritma, aplikasi yang online, dan laporan akhir."); }
+  { const s = base("Peta jalan 14 minggu", "Jadwal");
+    card(s, M, 1.8, 3.9, 4.6, "Minggu 1–3: Rintisan", "Konsep data mining, algoritma klasifikasi, rantai Markov, dan mekanisme gacha ZZZ.", C.acc, { bsize: 19 });
+    card(s, M + 4.1, 1.8, 3.9, 4.6, "Minggu 4–7: Fundamental", "Pengumpulan data riil, simulasi Monte Carlo, prapemrosesan, dan penyusunan proposal.", C.blue, { bsize: 19 });
+    card(s, M + 8.2, 1.8, 3.9, 4.6, "Minggu 8–14: Terapan", "Grid search, pelatihan dan komparasi 6 algoritma, aplikasi Streamlit, dan laporan akhir.", C.green, { bsize: 19 });
+    s.addNotes("Peta jalan (±0,5 menit). Penelitian dibagi tiga tahap selama 14 minggu: rintisan di minggu 1 sampai 3, fundamental di minggu 4 sampai 7 termasuk proposal ini, dan terapan di minggu 8 sampai 14. Jadwal per minggunya ada di akhir Bab II proposal."); }
+  penutup("Ada pertanyaan? Silakan coba aplikasinya langsung:").addNotes("Penutup (±0,5 menit). Ucapkan terima kasih, ajak membuka aplikasi lewat link, lalu buka sesi tanya jawab.");
 }
 
 // ===== dek UAS =====

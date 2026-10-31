@@ -1,6 +1,7 @@
 # Panduan Pengumpulan UTS & UAS: Kelompok 6 (A11.4502)
 
-Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
+Disusun dari kontrak perkuliahan dan panduan UTS (Proposal Proyek Akhir, Ganjil 2026/2027)
+Bapak Ardytha Luthfiarta, M.Kom, MCS.
 
 ## Isi folder ini
 
@@ -8,7 +9,7 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 |---|---|---|
 | `UTS_Proposal_Kelompok6_A11.4502.docx` | **UTS** | Proposal mengikuti format contoh dari dosen (Ringkasan, Bab I–II, jadwal 14 minggu, pustaka) |
 | `UTS_Proposal_Kelompok6_A11.4502.pdf` | **UTS** | Versi PDF proposal (isi dan tata letak sama dengan .docx) |
-| `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 19 slide + catatan pembicara (±27 menit) |
+| `UTS_Slide_Kelompok6_A11.4502.pptx` | **UTS** | 11 slide + catatan pembicara (±9,5 menit, sesuai batas video UTS 5–10 menit) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.docx` | **UAS** | Laporan Akhir (Bab I–V, pustaka, lampiran) |
 | `UAS_Laporan_Akhir_Kelompok6_A11.4502.pdf` | **UAS** | Versi PDF laporan akhir (isi dan tata letak sama dengan .docx) |
 | `UAS_Slide_Kelompok6_A11.4502.pptx` | **UAS** | 26 slide + catatan pembicara (±38 menit) |
@@ -19,6 +20,20 @@ Disusun dari kontrak perkuliahan Bapak Ardytha Luthfiarta, M.Kom, MCS.
 > jadwal 14 minggu, dan pustaka bernomor. Uji awal ikut ditulis di Subbab 2.4 karena aplikasinya
 > sudah jadi. Sebelum dikumpulkan, cek lagi pembagian tugas di Subbab 2.7 dan sesuaikan kalimat
 > yang kurang pas.
+
+## Yang dikumpulkan saat UTS (panduan UTS dari dosen)
+
+| Yang dikumpulkan | Ketentuan |
+|---|---|
+| Proposal | file **.docx**, dikirim sebagai link **file** Google Drive akun sendiri (bukan link folder), tidak private |
+| Slide | file **.pptx** (atau Canva), link file Google Drive akun sendiri, tidak private |
+| Video YouTube | **minimal 5 menit, maksimal 10 menit**, akun YouTube masing-masing, tidak private |
+| Kulino (khusus kelas daring) | PDF proposal **maksimal 5 MB**, di section UTS (setelah pertemuan ke-7) → Add Submission → Save changes |
+
+- File .docx dan .pptx yang diunggah ke Google Drive bisa langsung dibuka di Google Docs/Slides.
+  **Jangan diubah ke format Google Docs/Slides** ("Save as Google Docs"), karena yang diminta file .docx dan .pptx.
+- PDF untuk Kulino bisa dibuat dari Word (Save As → PDF) atau Google Docs (File → Download → PDF).
+- Bagian "Metodologi Penelitian" di panduan UTS untuk mata kuliah lain, tidak berlaku untuk Penambangan Data.
 
 ## Data wajib di Google Form (harus sama persis untuk SEMUA anggota)
 
@@ -39,8 +54,9 @@ Link form: https://bit.ly/ProyekAkhirGanjil26-27
 2. Klik kanan file → **Share** → **General access: Anyone with the link (Viewer)**.
    Kalau mau dibatasi, tambahkan email `Ardytha.Luthfiarta@dsn.dinus.ac.id`.
 3. Salin link **file**, bukan link folder.
-4. Upload video presentasi ke **YouTube akun sendiri**, visibilitas **Unlisted/Public** (bukan Private),
-   durasi **minimal 15 menit**.
+4. Upload video presentasi ke **YouTube akun sendiri**, visibilitas **Unlisted/Public** (bukan Private).
+   Durasi UTS **5–10 menit** (panduan UTS). Untuk UAS ikuti panduan UAS dari dosen
+   (kontrak perkuliahan menyebut minimal 15 menit).
 5. Isi Google Form dengan akun sendiri: link docx, link pptx, link YouTube.
 6. Setelah submit, cek email konfirmasi (aktifkan *auto response* kalau ada pilihan).
 7. **Deadline: H-1 jadwal UTS/UAS di Siadin**, paling lambat sebelum tanda tangan berita acara.
@@ -51,21 +67,38 @@ Link form: https://bit.ly/ProyekAkhirGanjil26-27
 - Semua tugas wajib dikumpulkan.
 - Wajib menyelesaikan Coursera *IBM Machine Learning* sampai dapat sertifikat Completion.
 
-## Naskah video (minimal 15 menit)
+## Naskah video
 
 Catatan pembicara untuk setiap slide sudah ada di file `.pptx`
 (PowerPoint → **View → Notes**). Pembagian waktu yang disarankan:
 
-| Bagian | Slide UTS | Slide UAS | Durasi |
-|---|---|---|---|
-| Pembukaan & tim | 1–2 | 1–2 | 2 menit |
-| Latar belakang, alasan memakai data mining, masalah (UTS: + batasan, kebaruan, penelitian terdahulu) | 3–7 | 3–5 | 5 (UAS) / 6,5 (UTS) menit |
-| Aturan banner & landasan teori | 8–11 | 6–9 | 6 menit |
-| Metodologi & data | 12–15 | 10–12 | 5 menit |
-| Aplikasi (demo langsung) | 16 | 13–14 | 3 menit |
-| Hasil & pembahasan (UAS: termasuk grid search, uji signifikansi, dan pola soft pity) | 17 | 15–24 | 2 (UTS) / 15 (UAS) menit |
-| Peta jalan 14 minggu / kesimpulan & penutup | 18–19 | 25–26 | 2 menit |
-| **Total** | | | **±27 menit (UTS) / ±38 menit (UAS)** |
+**UTS (batas video 5–10 menit)**
+
+| Bagian | Slide | Durasi |
+|---|---|---|
+| Pembukaan & tim | 1–2 | 1 menit |
+| Latar belakang (bukti soft pity: 1,44% vs 1,6%) | 3 | 1,5 menit |
+| Rumusan masalah | 4 | 0,5 menit |
+| Penelitian terdahulu & kebaruan | 5 | 1 menit |
+| Data riil + simulasi, fitur & label | 6 | 1 menit |
+| Metode & 6 algoritma | 7 | 1,5 menit |
+| Aplikasi (demo singkat) | 8 | 1 menit |
+| Hasil yang diharapkan & target | 9 | 1 menit |
+| Peta jalan & penutup | 10–11 | 1 menit |
+| **Total** | | **±9,5 menit** |
+
+**UAS**
+
+| Bagian | Slide | Durasi |
+|---|---|---|
+| Pembukaan & tim | 1–2 | 2 menit |
+| Latar belakang, alasan memakai data mining, masalah | 3–5 | 5 menit |
+| Aturan banner & landasan teori | 6–9 | 6 menit |
+| Metodologi & data | 10–12 | 5 menit |
+| Aplikasi (demo langsung) | 13–14 | 3 menit |
+| Hasil & pembahasan (termasuk grid search, uji signifikansi, dan pola soft pity) | 15–24 | 15 menit |
+| Kesimpulan & penutup | 25–26 | 2 menit |
+| **Total** | | **±38 menit** |
 
 Tips rekaman:
 - Rekam layar dengan OBS Studio (gratis) atau Zoom (record to computer), kamera di pojok.
